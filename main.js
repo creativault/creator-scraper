@@ -13,7 +13,7 @@
  * - service_level 决定返回字段范围与积分单价
  */
 
-import { Actor } from 'apify';
+import { Actor, log } from 'apify';
 
 // 初始化 Actor
 await Actor.init();
@@ -22,7 +22,6 @@ const SEARCH_PATH = '/openapi/v1/creators/tiktok/search';
 const MAX_PAGES_SAFETY = 200; // CV 文档规定 page 范围 1-200，兜底防护
 
 const input = await Actor.getInput();
-const log = Actor.log;
 
 // ---------- 1. 参数校验 ----------
 if (!input.apiKey) {
@@ -32,7 +31,7 @@ if (!input.userIdentity || !input.userIdentity.includes('@')) {
     log.warning('userIdentity 不是合法邮箱，可能导致部分接口被拒。');
 }
 
-const baseUrl = (input.apiBaseUrl || 'https://openapi.creativault.vip').replace(/\/+$/, '');
+const baseUrl = (input.apiBaseUrl || 'https://creativault-business.creativault.ai').replace(/\/+$/, '');
 const url = baseUrl + SEARCH_PATH;
 const maxResults = input.maxResults || 100;
 const sizePerPage = Math.min(input.sizePerPage || 50, 100);

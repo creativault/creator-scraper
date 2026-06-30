@@ -23,7 +23,7 @@
       "type": "string",
       "description": "Creatilab OpenAPI 基础地址，一般无需修改。",
       "editor": "textfield",
-      "default": "https://openapi.creativault.vip"
+      "default": "https://creativault-business.creativault.ai"
     },
     "keyword": {
       "title": "搜索关键词",
