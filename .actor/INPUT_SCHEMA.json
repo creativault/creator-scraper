@@ -9,8 +9,7 @@
       "type": "string",
       "description": "你的 Creatilab OpenAPI API Key（格式如 cv_live_xxx）。前往 Creatilab 平台获取。",
       "editor": "textfield",
-      "isSecret": true,
-      "minLength": 10
+      "isSecret": true
     },
     "userIdentity": {
       "title": "用户标识（邮箱）",
