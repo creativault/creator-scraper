@@ -1,0 +1,49 @@
+{
+    "actorSpecification": 1,
+    "name": "tiktok-creator-search",
+    "title": "TikTok Creator Search",
+    "description": "TikTok creator search with multi-dimensional filtering — followers, engagement, audience demographics, contact info & commerce (GMV). Tiered data depth (S1/S2/S3). Powered by Creatilab OpenAPI.",
+    "version": "0.1.0",
+    "buildTag": "latest",
+    "meta": {
+        "templateId": "starter-javascript"
+    },
+    "input": "./INPUT_SCHEMA.json",
+    "dockerfile": "../Dockerfile",
+    "storages": {
+        "dataset": {
+            "actorSpecification": 1,
+            "title": "TikTok Creators",
+            "views": {
+                "overview": {
+                    "title": "Overview",
+                    "transformation": {
+                        "fields": [
+                            "uid",
+                            "username",
+                            "nickname",
+                            "followers_count",
+                            "engagement_rate",
+                            "country_code",
+                            "has_email",
+                            "email"
+                        ]
+                    },
+                    "display": {
+                        "component": "table",
+                        "columns": [
+                            { "label": "UID", "source": "uid", "align": "left" },
+                            { "label": "Username", "source": "username", "align": "left" },
+                            { "label": "Nickname", "source": "nickname", "align": "left" },
+                            { "label": "Followers", "source": "followers_count", "align": "right" },
+                            { "label": "Engagement", "source": "engagement_rate", "align": "right" },
+                            { "label": "Country", "source": "country_code", "align": "center" },
+                            { "label": "Has Email", "source": "has_email", "align": "center" },
+                            { "label": "Email", "source": "email", "align": "left" }
+                        ]
+                    }
+                }
+            }
+        }
+    }
+}

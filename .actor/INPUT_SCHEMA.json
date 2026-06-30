@@ -1,0 +1,170 @@
+{
+  "title": "TikTok Creator Search",
+  "description": "搜索 TikTok 创作者并按多维度筛选。Powered by Creatilab OpenAPI.\n\n你需要一个 Creatilab OpenAPI 的 API Key 才能使用此 Actor。在下方填入你的 Key。",
+  "type": "object",
+  "schemaVersion": 1,
+  "properties": {
+    "apiKey": {
+      "title": "Creatilab API Key",
+      "type": "string",
+      "description": "你的 Creatilab OpenAPI API Key（格式如 cv_live_xxx）。前往 Creatilab 平台获取。",
+      "editor": "textfield",
+      "isSecret": true,
+      "minLength": 10
+    },
+    "userIdentity": {
+      "title": "用户标识（邮箱）",
+      "type": "string",
+      "description": "用于 X-User-Identity 头，值为操作人员的邮箱地址。",
+      "editor": "textfield",
+      "default": "apify-user@example.com"
+    },
+    "apiBaseUrl": {
+      "title": "API Base URL",
+      "type": "string",
+      "description": "Creatilab OpenAPI 基础地址，一般无需修改。",
+      "editor": "textfield",
+      "default": "https://openapi.creativault.vip"
+    },
+    "keyword": {
+      "title": "搜索关键词",
+      "type": "string",
+      "description": "搜索关键词，可选。",
+      "editor": "textfield"
+    },
+    "countryCode": {
+      "title": "国家/地区代码",
+      "type": "string",
+      "description": "国家代码，多选逗号分隔，例如 US、CA、MX 或 CA,MX,US。",
+      "editor": "textfield",
+      "default": "US"
+    },
+    "languageCode": {
+      "title": "语言代码",
+      "type": "string",
+      "description": "语言代码，多选逗号分隔，例如 en、zh 或 en,zh。",
+      "editor": "textfield"
+    },
+    "followersCntGte": {
+      "title": "粉丝数 ≥",
+      "type": "integer",
+      "description": "粉丝数下限。常见值：10000（1万粉）、100000（10万粉）。",
+      "default": 10000,
+      "minimum": 0
+    },
+    "followersCntLte": {
+      "title": "粉丝数 ≤",
+      "type": "integer",
+      "description": "粉丝数上限，0 或留空表示不限。",
+      "default": 0,
+      "minimum": 0
+    },
+    "last10AvgVideoViewsGte": {
+      "title": "近10条视频平均播放量 ≥",
+      "type": "number",
+      "description": "近10条视频平均播放量下限。",
+      "default": 0,
+      "minimum": 0
+    },
+    "last10AvgVideoInteractionRateGte": {
+      "title": "近10条视频平均互动率 ≥",
+      "type": "number",
+      "description": "近10条视频平均互动率下限（百分比，例如 5 表示 5%）。",
+      "default": 0,
+      "minimum": 0,
+      "maximum": 100
+    },
+    "hasEmail": {
+      "title": "仅含邮箱联系方式",
+      "type": "boolean",
+      "description": "开启后只返回公开了邮箱的创作者。",
+      "default": false
+    },
+    "hasMcn": {
+      "title": "仅含 MCN",
+      "type": "boolean",
+      "description": "开启后只返回绑定了 MCN 的创作者。",
+      "default": false
+    },
+    "lastVideoPublishDateGte": {
+      "title": "最近发布日期起始",
+      "type": "string",
+      "description": "最近视频发布日期起始，格式 YYYY-MM-DD。",
+      "editor": "textfield"
+    },
+    "lastVideoPublishDateLte": {
+      "title": "最近发布日期截止",
+      "type": "string",
+      "description": "最近视频发布日期截止，格式 YYYY-MM-DD。",
+      "actorBeta": true
+    },
+    "gender": {
+      "title": "性别",
+      "type": "string",
+      "description": "筛选性别。注意 CV 后端码值需小写：male / female。",
+      "editor": "select",
+      "enum": ["", "male", "female"],
+      "enumTitles": ["不限", "男", "女"],
+      "default": ""
+    },
+    "sortField": {
+      "title": "排序字段",
+      "type": "string",
+      "description": "结果排序字段。",
+      "editor": "select",
+      "enum": ["followers_cnt", "last10_avg_video_views_cnt", "last10_avg_video_interaction_rate"],
+      "enumTitles": ["粉丝数", "近10条平均播放量", "近10条平均互动率"],
+      "default": "followers_cnt"
+    },
+    "sortOrder": {
+      "title": "排序方式",
+      "type": "string",
+      "editor": "select",
+      "enum": ["desc", "asc"],
+      "enumTitles": ["降序", "升序"],
+      "default": "desc"
+    },
+    "serviceLevel": {
+      "title": "服务等级",
+      "type": "string",
+      "description": "数据返回深度与计费等级：\n- S1 纯名单筛选：基础字段（粉丝、点赞、视频数、联系方式标识）\n- S2 精准触达（推荐）：S1 + 国家、性别、互动率、电商数据、真实联系方式、领域标签\n- S3 深度画像：S2 + 受众性别/年龄/国家/语言分布",
+      "editor": "select",
+      "enum": ["S1", "S2", "S3"],
+      "enumTitles": ["S1 纯名单筛选", "S2 精准触达（推荐）", "S3 深度画像"],
+      "default": "S2"
+    },
+    "lang": {
+      "title": "响应语言",
+      "type": "string",
+      "description": "码值翻译语言：cn 中文 / en 英文。翻译 country_code、gender、audience_* 等码值字段。",
+      "editor": "select",
+      "enum": ["en", "cn"],
+      "enumTitles": ["English", "中文"],
+      "default": "en"
+    },
+    "maxResults": {
+      "title": "最大结果数",
+      "type": "integer",
+      "description": "本 Actor 抓取的最大条数上限。MVP 阶段建议保持较小值（如 100）以控制积分消耗。",
+      "default": 100,
+      "minimum": 1,
+      "maximum": 5000
+    },
+    "sizePerPage": {
+      "title": "每页条数",
+      "type": "integer",
+      "description": "每次 API 请求的每页条数，范围 1-100。大值可减少请求次数，但单次积分消耗更高。",
+      "default": 50,
+      "minimum": 1,
+      "maximum": 100
+    },
+    "proxyConfiguration": {
+      "title": "Proxy 配置",
+      "type": "object",
+      "description": "可选。MVP 一般不需要代理（CV OpenAPI 是服务端调用，非浏览器爬取）。",
+      "editor": "proxy",
+      "prefill": { "useApifyProxy": false }
+    }
+  },
+  "required": ["apiKey"]
+}

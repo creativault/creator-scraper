@@ -1,0 +1,14 @@
+{
+  "name": "tiktok-creator-search",
+  "version": "0.1.0",
+  "description": "TikTok creator search with multi-dimensional filtering — followers, engagement, audience demographics, contact info & commerce (GMV). Powered by Creatilab OpenAPI.",
+  "dependencies": {
+    "apify": "^3.2.6"
+  },
+  "scripts": {
+    "start": "node main.js"
+  },
+  "type": "module",
+  "author": "creativault",
+  "license": "MIT"
+}
