@@ -96,7 +96,7 @@
       "title": "最近发布日期截止",
       "type": "string",
       "description": "最近视频发布日期截止，格式 YYYY-MM-DD。",
-      "actorBeta": true
+      "editor": "textfield"
     },
     "gender": {
       "title": "性别",
@@ -162,8 +162,7 @@
       "title": "Proxy 配置",
       "type": "object",
       "description": "可选。MVP 一般不需要代理（CV OpenAPI 是服务端调用，非浏览器爬取）。",
-      "editor": "proxy",
-      "prefill": { "useApifyProxy": false }
+      "editor": "proxy"
     }
   },
   "required": ["apiKey"]
