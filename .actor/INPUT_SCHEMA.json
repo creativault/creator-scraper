@@ -118,6 +118,7 @@
     "sortOrder": {
       "title": "排序方式",
       "type": "string",
+      "description": "结果排序方式：desc 降序（从高到低）/ asc 升序（从低到高）。",
       "editor": "select",
       "enum": ["desc", "asc"],
       "enumTitles": ["降序", "升序"],
