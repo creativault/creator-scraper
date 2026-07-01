@@ -1,9 +1,8 @@
-# Apify Actor - TikTok Creator Search
-# 基于 Node.js 20 (LTS)，CV OpenAPI 调用仅需原生 fetch，无额外运行时依赖
-
+# Apify Actor - CreatiVault OpenAPI
+# Node.js 20 includes native fetch/FormData/Blob for OpenAPI and upload calls.
 FROM apify/actor-node:20
 
-# 复制依赖清单并安装（利用 Docker 层缓存）
+# Install runtime dependencies. package*.json keeps this layer cache-friendly.
 COPY --chown=myuser package*.json ./
 RUN npm --quiet set progress=false \
  && npm install --omit=dev --omit=optional \
@@ -11,9 +10,8 @@ RUN npm --quiet set progress=false \
  && echo "Node.js version v$(node --version)" \
  && echo "NPM version v$(npm --version)"
 
-# 复制 Actor 源码与配置
+# Copy actor source and Apify metadata.
 COPY --chown=myuser main.js ./
 COPY --chown=myuser .actor .actor
 
-# 运行 Actor
 CMD npm start --silent

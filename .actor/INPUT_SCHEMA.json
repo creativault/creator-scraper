@@ -1,169 +1,552 @@
 {
-  "title": "TikTok Creator Search",
-  "description": "搜索 TikTok 创作者并按多维度筛选。Powered by Creatilab OpenAPI.\n\n你需要一个 Creatilab OpenAPI 的 API Key 才能使用此 Actor。在下方填入你的 Key。",
+  "title": "CreatiVault OpenAPI Actor",
+  "description": "Run CreatiVault OpenAPI operations from Apify: creator search, video search, lookalike, collection tasks, exports, video audit, outreach, uploads, and raw endpoint calls.",
   "type": "object",
   "schemaVersion": 1,
   "properties": {
-    "apiKey": {
-      "title": "Creatilab API Key",
+    "operation": {
+      "title": "Operation",
       "type": "string",
-      "description": "你的 Creatilab OpenAPI API Key（格式如 cv_live_xxx）。前往 Creatilab 平台获取。",
+      "description": "Choose the OpenAPI operation to run.",
+      "editor": "select",
+      "enum": [
+        "creatorSearch",
+        "videoSearch",
+        "lookalike",
+        "collectionSubmit",
+        "keywordCollectionSubmit",
+        "collectionStatus",
+        "collectionData",
+        "collectionExport",
+        "fileDownloadUrl",
+        "mediaUpload",
+        "videoAuditSubmit",
+        "videoAuditStatus",
+        "videoAuditResult",
+        "outreachSend",
+        "outreachTask",
+        "outreachContact",
+        "outreachTodo",
+        "outreachMetrics",
+        "outreachConfig",
+        "outreachUpload",
+        "rawRequest"
+      ],
+      "enumTitles": [
+        "Creator search",
+        "Video search",
+        "Lookalike creators",
+        "Submit collection task",
+        "Submit keyword collection",
+        "Collection status",
+        "Collection data",
+        "Collection export",
+        "File download URL",
+        "Upload media",
+        "Submit video audit",
+        "Video audit status",
+        "Video audit result",
+        "Send outreach email",
+        "Outreach task status",
+        "Outreach contact",
+        "Outreach todo",
+        "Outreach metrics",
+        "Outreach config",
+        "Upload outreach attachment",
+        "Raw OpenAPI request"
+      ],
+      "default": "creatorSearch"
+    },
+    "apiKey": {
+      "title": "CreatiVault API Key",
+      "type": "string",
+      "description": "Your CreatiVault OpenAPI key, for example cv_live_xxx.",
       "editor": "textfield",
       "isSecret": true
     },
     "userIdentity": {
-      "title": "用户标识（邮箱）",
+      "title": "User identity email",
       "type": "string",
-      "description": "用于 X-User-Identity 头，值为操作人员的邮箱地址。",
-      "editor": "textfield",
-      "default": "apify-user@example.com"
+      "description": "Value for X-User-Identity. Use the operator email address.",
+      "editor": "textfield"
     },
     "apiBaseUrl": {
       "title": "API Base URL",
       "type": "string",
-      "description": "Creatilab OpenAPI 基础地址，一般无需修改。",
+      "description": "CreatiVault OpenAPI base URL. Usually no change is needed.",
       "editor": "textfield",
       "default": "https://creativault-business.creativault.ai"
     },
-    "keyword": {
-      "title": "搜索关键词",
+    "platform": {
+      "title": "Platform",
       "type": "string",
-      "description": "搜索关键词，可选。",
+      "description": "Platform for creator/video/collection operations.",
+      "editor": "select",
+      "enum": ["", "tiktok", "youtube", "instagram", "twitter"],
+      "enumTitles": ["Not set", "TikTok", "YouTube", "Instagram", "Twitter/X"],
+      "default": "tiktok"
+    },
+    "keyword": {
+      "title": "Keyword",
+      "type": "string",
+      "description": "Creator search keyword or fallback video title keyword.",
       "editor": "textfield"
     },
     "countryCode": {
-      "title": "国家/地区代码",
+      "title": "Country code",
       "type": "string",
-      "description": "国家代码，多选逗号分隔，例如 US、CA、MX 或 CA,MX,US。",
+      "description": "Country/region code, comma-separated for multiple values, for example US,CA.",
       "editor": "textfield",
       "default": "US"
     },
     "languageCode": {
-      "title": "语言代码",
+      "title": "Language code",
       "type": "string",
-      "description": "语言代码，多选逗号分隔，例如 en、zh 或 en,zh。",
+      "description": "Creator content language code, comma-separated for multiple values, for example en,es.",
+      "editor": "textfield"
+    },
+    "industry": {
+      "title": "Industry",
+      "type": "string",
+      "description": "Industry/category filter. Prefer backend-supported category IDs or names.",
       "editor": "textfield"
     },
     "followersCntGte": {
-      "title": "粉丝数 ≥",
+      "title": "Followers >=",
       "type": "integer",
-      "description": "粉丝数下限。常见值：10000（1万粉）、100000（10万粉）。",
+      "description": "Minimum followers/subscribers.",
       "default": 10000,
       "minimum": 0
     },
     "followersCntLte": {
-      "title": "粉丝数 ≤",
+      "title": "Followers <=",
       "type": "integer",
-      "description": "粉丝数上限，0 或留空表示不限。",
+      "description": "Maximum followers/subscribers. Leave as 0 to omit.",
       "default": 0,
       "minimum": 0
     },
     "last10AvgVideoViewsGte": {
-      "title": "近10条视频平均播放量 ≥",
+      "title": "Avg views >=",
       "type": "number",
-      "description": "近10条视频平均播放量下限。",
+      "description": "Minimum average views. Mapped to the correct platform field.",
+      "default": 0,
+      "minimum": 0
+    },
+    "last10AvgVideoViewsLte": {
+      "title": "Avg views <=",
+      "type": "number",
+      "description": "Maximum average views. Leave as 0 to omit.",
       "default": 0,
       "minimum": 0
     },
     "last10AvgVideoInteractionRateGte": {
-      "title": "近10条视频平均互动率 ≥",
+      "title": "Interaction rate >= (%)",
       "type": "number",
-      "description": "近10条视频平均互动率下限（百分比，例如 5 表示 5%）。",
+      "description": "Minimum interaction rate as a 0-100 percentage.",
+      "default": 0,
+      "minimum": 0,
+      "maximum": 100
+    },
+    "last10AvgVideoInteractionRateLte": {
+      "title": "Interaction rate <= (%)",
+      "type": "number",
+      "description": "Maximum interaction rate as a 0-100 percentage. Leave as 0 to omit.",
       "default": 0,
       "minimum": 0,
       "maximum": 100
     },
     "hasEmail": {
-      "title": "仅含邮箱联系方式",
+      "title": "Has email",
       "type": "boolean",
-      "description": "开启后只返回公开了邮箱的创作者。",
+      "description": "Only return creators with public email contact when supported.",
       "default": false
     },
     "hasMcn": {
-      "title": "仅含 MCN",
+      "title": "TikTok has MCN",
       "type": "boolean",
-      "description": "开启后只返回绑定了 MCN 的创作者。",
+      "description": "TikTok only.",
       "default": false
     },
-    "lastVideoPublishDateGte": {
-      "title": "最近发布日期起始",
+    "hasWhatsapp": {
+      "title": "Has WhatsApp",
+      "type": "boolean",
+      "description": "YouTube/Instagram filter.",
+      "default": false
+    },
+    "isProductKol": {
+      "title": "Instagram product KOL",
+      "type": "boolean",
+      "description": "Instagram only.",
+      "default": false
+    },
+    "isAiCreator": {
+      "title": "AI creator",
+      "type": "boolean",
+      "description": "YouTube/Instagram filter when supported.",
+      "default": false
+    },
+    "gender": {
+      "title": "Gender",
       "type": "string",
-      "description": "最近视频发布日期起始，格式 YYYY-MM-DD。",
+      "description": "female/male or 0/1. The actor maps female to 0 and male to 1 for creator search.",
+      "editor": "select",
+      "enum": ["", "female", "male", "0", "1"],
+      "enumTitles": ["Any", "Female", "Male", "0 female", "1 male"],
+      "default": ""
+    },
+    "audienceCountryCodeList": {
+      "title": "Audience country codes",
+      "type": "string",
+      "description": "Audience country code list, comma-separated.",
+      "editor": "textfield"
+    },
+    "audienceLanguageCodeList": {
+      "title": "Audience language codes",
+      "type": "string",
+      "description": "Audience language code list, comma-separated.",
+      "editor": "textfield"
+    },
+    "audienceFemaleRateGte": {
+      "title": "Female audience >= (%)",
+      "type": "number",
+      "description": "Minimum female audience percentage.",
+      "default": 0,
+      "minimum": 0,
+      "maximum": 100
+    },
+    "lastVideoPublishDateGte": {
+      "title": "Last publish from",
+      "type": "string",
+      "description": "YYYY-MM-DD.",
       "editor": "textfield"
     },
     "lastVideoPublishDateLte": {
-      "title": "最近发布日期截止",
+      "title": "Last publish to",
       "type": "string",
-      "description": "最近视频发布日期截止，格式 YYYY-MM-DD。",
+      "description": "YYYY-MM-DD.",
       "editor": "textfield"
     },
-    "gender": {
-      "title": "性别",
-      "type": "string",
-      "description": "筛选性别。注意 CV 后端码值需小写：male / female。",
-      "editor": "select",
-      "enum": ["", "male", "female"],
-      "enumTitles": ["不限", "男", "女"],
-      "default": ""
-    },
     "sortField": {
-      "title": "排序字段",
+      "title": "Sort field",
       "type": "string",
-      "description": "结果排序字段。",
-      "editor": "select",
-      "enum": ["followers_cnt", "last10_avg_video_views_cnt", "last10_avg_video_interaction_rate"],
-      "enumTitles": ["粉丝数", "近10条平均播放量", "近10条平均互动率"],
-      "default": "followers_cnt"
+      "description": "Optional sort field. If empty, the actor picks a platform-safe default.",
+      "editor": "textfield"
     },
     "sortOrder": {
-      "title": "排序方式",
+      "title": "Sort order",
       "type": "string",
-      "description": "结果排序方式：desc 降序（从高到低）/ asc 升序（从低到高）。",
+      "description": "desc or asc.",
       "editor": "select",
       "enum": ["desc", "asc"],
-      "enumTitles": ["降序", "升序"],
+      "enumTitles": ["Descending", "Ascending"],
       "default": "desc"
     },
     "serviceLevel": {
-      "title": "服务等级",
+      "title": "Service level",
       "type": "string",
-      "description": "数据返回深度与计费等级：\n- S1 纯名单筛选：基础字段（粉丝、点赞、视频数、联系方式标识）\n- S2 精准触达（推荐）：S1 + 国家、性别、互动率、电商数据、真实联系方式、领域标签\n- S3 深度画像：S2 + 受众性别/年龄/国家/语言分布",
+      "description": "S1 basic list, S2 precision outreach, S3 deep audience profile.",
       "editor": "select",
       "enum": ["S1", "S2", "S3"],
-      "enumTitles": ["S1 纯名单筛选", "S2 精准触达（推荐）", "S3 深度画像"],
+      "enumTitles": ["S1 basic", "S2 recommended", "S3 deep profile"],
       "default": "S2"
     },
     "lang": {
-      "title": "响应语言",
+      "title": "Response language",
       "type": "string",
-      "description": "码值翻译语言：cn 中文 / en 英文。翻译 country_code、gender、audience_* 等码值字段。",
+      "description": "Language for translated code values.",
       "editor": "select",
       "enum": ["en", "cn"],
-      "enumTitles": ["English", "中文"],
+      "enumTitles": ["English", "Chinese"],
       "default": "en"
     },
     "maxResults": {
-      "title": "最大结果数",
+      "title": "Max records",
       "type": "integer",
-      "description": "本 Actor 抓取的最大条数上限。MVP 阶段建议保持较小值（如 100）以控制积分消耗。",
+      "description": "Maximum records pushed to the Apify dataset for paged operations.",
       "default": 100,
       "minimum": 1,
-      "maximum": 5000
+      "maximum": 100000
     },
-    "sizePerPage": {
-      "title": "每页条数",
+    "size": {
+      "title": "Page size",
       "type": "integer",
-      "description": "每次 API 请求的每页条数，范围 1-100。大值可减少请求次数，但单次积分消耗更高。",
+      "description": "Creator/collection page size max 100; video search max 10.",
       "default": 50,
       "minimum": 1,
       "maximum": 100
     },
-    "proxyConfiguration": {
-      "title": "Proxy 配置",
+    "values": {
+      "title": "Values",
+      "type": "array",
+      "description": "Collection links, usernames, creator profile URLs, or generic value list.",
+      "editor": "stringList",
+      "items": { "type": "string" }
+    },
+    "keywords": {
+      "title": "Keywords",
+      "type": "array",
+      "description": "Keyword collection terms, max 10.",
+      "editor": "stringList",
+      "items": { "type": "string" }
+    },
+    "taskType": {
+      "title": "Collection task type",
+      "type": "string",
+      "description": "Collection task type.",
+      "editor": "select",
+      "enum": ["LINK_BATCH", "FILE_UPLOAD", "CREATOR_VIDEO", "POST_VIDEO"],
+      "enumTitles": ["Profile links", "Usernames", "Creator videos", "Post videos"],
+      "default": "LINK_BATCH"
+    },
+    "taskId": {
+      "title": "Task ID",
+      "type": "string",
+      "description": "Collection, outreach, or video audit task ID.",
+      "editor": "textfield"
+    },
+    "taskName": {
+      "title": "Task name",
+      "type": "string",
+      "description": "Optional collection task name.",
+      "editor": "textfield"
+    },
+    "webhookUrl": {
+      "title": "Webhook URL",
+      "type": "string",
+      "description": "Optional HTTPS callback URL for collection tasks.",
+      "editor": "textfield"
+    },
+    "waitForCompletion": {
+      "title": "Wait for completion",
+      "type": "boolean",
+      "description": "For collection, video audit, and outreach submit operations, poll task status before finishing.",
+      "default": false
+    },
+    "pollIntervalSeconds": {
+      "title": "Poll interval seconds",
+      "type": "integer",
+      "description": "Polling interval for async tasks.",
+      "default": 60,
+      "minimum": 1
+    },
+    "maxPollAttempts": {
+      "title": "Max poll attempts",
+      "type": "integer",
+      "description": "Maximum polling attempts before timing out.",
+      "default": 45,
+      "minimum": 1
+    },
+    "fetchData": {
+      "title": "Fetch collection data",
+      "type": "boolean",
+      "description": "After a completed collection task, fetch paginated data into the dataset.",
+      "default": false
+    },
+    "exportFormat": {
+      "title": "Export format",
+      "type": "string",
+      "description": "Collection export format. Set this with waitForCompletion to auto-export.",
+      "editor": "select",
+      "enum": ["", "xlsx", "csv", "html"],
+      "enumTitles": ["Do not export", "Excel xlsx", "CSV", "HTML"],
+      "default": ""
+    },
+    "username": {
+      "title": "Seed username",
+      "type": "string",
+      "description": "Lookalike seed username.",
+      "editor": "textfield"
+    },
+    "profileUrl": {
+      "title": "Seed profile URL",
+      "type": "string",
+      "description": "Lookalike seed creator profile URL.",
+      "editor": "textfield"
+    },
+    "targetPlatform": {
+      "title": "Target platform",
+      "type": "string",
+      "description": "Lookalike target platform.",
+      "editor": "select",
+      "enum": ["", "tiktok", "youtube", "instagram"],
+      "enumTitles": ["Same as seed", "TikTok", "YouTube", "Instagram"],
+      "default": ""
+    },
+    "limit": {
+      "title": "Limit",
+      "type": "integer",
+      "description": "Lookalike result limit.",
+      "default": 20,
+      "minimum": 1,
+      "maximum": 50
+    },
+    "hashtag": {
+      "title": "Video hashtags",
+      "type": "array",
+      "description": "Video search hashtags, max 3.",
+      "editor": "stringList",
+      "items": { "type": "string" }
+    },
+    "videoTitle": {
+      "title": "Video title keyword",
+      "type": "string",
+      "description": "Video title keyword for video search.",
+      "editor": "textfield"
+    },
+    "videoViewsCntGte": {
+      "title": "Video views >=",
+      "type": "integer",
+      "description": "Minimum video views for video search.",
+      "minimum": 0
+    },
+    "videoInteractionRateGte": {
+      "title": "Video interaction >= (%)",
+      "type": "number",
+      "description": "Minimum video interaction rate as 0-100 percentage.",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "videoUrl": {
+      "title": "Video URL",
+      "type": "string",
+      "description": "TikTok, Instagram Reels, or YouTube Shorts URL for video audit.",
+      "editor": "textfield"
+    },
+    "uploadedOssKey": {
+      "title": "Uploaded OSS key",
+      "type": "string",
+      "description": "OSS key returned by mediaUpload for video audit.",
+      "editor": "textfield"
+    },
+    "brief": {
+      "title": "Audit brief",
+      "type": "string",
+      "description": "Optional customer brief for video audit.",
+      "editor": "textarea"
+    },
+    "auditMode": {
+      "title": "Audit mode",
+      "type": "string",
+      "description": "Video audit mode.",
+      "editor": "select",
+      "enum": ["high", "low"],
+      "enumTitles": ["High", "Low"],
+      "default": "high"
+    },
+    "enableBenchmark": {
+      "title": "Enable benchmark",
+      "type": "boolean",
+      "description": "Compare video audit against benchmark library.",
+      "default": false
+    },
+    "fileUrl": {
+      "title": "File URL",
+      "type": "string",
+      "description": "Public URL for mediaUpload or outreachUpload.",
+      "editor": "textfield"
+    },
+    "filename": {
+      "title": "Upload filename",
+      "type": "string",
+      "description": "Optional filename override for upload operations.",
+      "editor": "textfield"
+    },
+    "to": {
+      "title": "Outreach email",
+      "type": "string",
+      "description": "Single outreach recipient email.",
+      "editor": "textfield"
+    },
+    "uid": {
+      "title": "Creator UID",
+      "type": "string",
+      "description": "Creator UID from search results, required for single outreach send.",
+      "editor": "textfield"
+    },
+    "nickname": {
+      "title": "Creator nickname",
+      "type": "string",
+      "description": "Optional creator nickname for outreach.",
+      "editor": "textfield"
+    },
+    "recipients": {
+      "title": "Outreach recipients",
+      "type": "array",
+      "description": "Batch outreach recipients. Each item should include email and uid.",
+      "editor": "json",
+      "items": { "type": "object" }
+    },
+    "subject": {
+      "title": "Email subject",
+      "type": "string",
+      "description": "Outreach email subject.",
+      "editor": "textfield"
+    },
+    "bodyText": {
+      "title": "Email text body",
+      "type": "string",
+      "description": "Plain-text outreach body.",
+      "editor": "textarea"
+    },
+    "bodyHtml": {
+      "title": "Email HTML body",
+      "type": "string",
+      "description": "HTML outreach body.",
+      "editor": "textarea"
+    },
+    "channel": {
+      "title": "Email channel",
+      "type": "string",
+      "description": "Outreach send channel.",
+      "editor": "select",
+      "enum": ["ses", "gmail", "outlook"],
+      "enumTitles": ["SES", "Gmail", "Outlook"],
+      "default": "ses"
+    },
+    "deliveryType": {
+      "title": "Delivery type",
+      "type": "string",
+      "description": "Delivery type for fileDownloadUrl.",
+      "editor": "textfield"
+    },
+    "deliveryParams": {
+      "title": "Delivery params",
       "type": "object",
-      "description": "可选。MVP 一般不需要代理（CV OpenAPI 是服务端调用，非浏览器爬取）。",
+      "description": "Strategy-specific params for fileDownloadUrl.",
+      "editor": "json"
+    },
+    "endpointPath": {
+      "title": "Raw endpoint path",
+      "type": "string",
+      "description": "Raw endpoint path, for example /openapi/v1/creators/tiktok/search.",
+      "editor": "textfield"
+    },
+    "requestBody": {
+      "title": "Advanced request body",
+      "type": "object",
+      "description": "JSON body merged into the generated request body. Values here override mapped fields.",
+      "editor": "json"
+    },
+    "rawBodyJson": {
+      "title": "Raw body JSON string",
+      "type": "string",
+      "description": "Optional JSON string merged after requestBody. Useful when Apify UI cannot express a nested shape.",
+      "editor": "textarea"
+    },
+    "maxRetries": {
+      "title": "Max retries",
+      "type": "integer",
+      "description": "Retries for 429 and 5xx responses.",
+      "default": 3,
+      "minimum": 1,
+      "maximum": 10
+    },
+    "proxyConfiguration": {
+      "title": "Proxy configuration",
+      "type": "object",
+      "description": "Optional. CreatiVault OpenAPI is server-to-server, so a proxy is usually unnecessary.",
       "editor": "proxy"
     }
   },
-  "required": ["apiKey"]
+  "required": ["apiKey", "userIdentity", "operation"]
 }

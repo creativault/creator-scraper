@@ -1,12 +1,13 @@
 {
-  "name": "tiktok-creator-search",
-  "version": "0.1.0",
-  "description": "TikTok creator search with multi-dimensional filtering — followers, engagement, audience demographics, contact info & commerce (GMV). Powered by Creatilab OpenAPI.",
+  "name": "creativault-openapi-actor",
+  "version": "1.0.0",
+  "description": "CreatiVault OpenAPI actor for creator search, video search, lookalike discovery, collection tasks, exports, video audit, outreach, uploads, and raw endpoint calls.",
   "dependencies": {
     "apify": "^3.2.6"
   },
   "scripts": {
-    "start": "node main.js"
+    "start": "node main.js",
+    "check": "node --check main.js"
   },
   "type": "module",
   "author": "creativault",

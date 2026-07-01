@@ -1,230 +1,884 @@
-/**
- * TikTok Creator Search Actor (MVP)
- *
- * 调用 Creatilab OpenAPI 搜索 TikTok 创作者，支持多维度筛选，
- * 并将结果推送到 Apify Dataset。
- *
- * CV OpenAPI 规范要点（来自 docs/api/Creatilab SKU Open API 接口文档（外部）.md）：
- * - 统一 POST + JSON Body，禁止 query param
- * - 认证：X-API-Key（必填）+ X-User-Identity（必填）
- * - 响应包装：{ success, data, error, meta }
- * - 注意：所有 data 字段值被强制 stringify（数字、布尔也变字符串）
- * - meta.total 仅在筛选条件 > 2 时返回，否则为 null
- * - service_level 决定返回字段范围与积分单价
- */
-
 import { Actor, log } from 'apify';
 
-// 初始化 Actor
 await Actor.init();
 
-const SEARCH_PATH = '/openapi/v1/creators/tiktok/search';
-const MAX_PAGES_SAFETY = 200; // CV 文档规定 page 范围 1-200，兜底防护
+const DEFAULT_BASE_URL = 'https://creativault-business.creativault.ai';
+const MAX_SEARCH_PAGES = 200;
+const TERMINAL_STATUSES = new Set(['completed', 'failed', 'timeout']);
+const NUMERIC_FIELDS = new Set([
+    'followers_count', 'followers_cnt', 'likes_count', 'video_count', 'view_count',
+    'avg_views', 'avg_views_short', 'avg_views_long', 'engagement_rate',
+    'engagement_rate_short', 'engagement_rate_long', 'views_per_follower',
+    'last10_video_views_per_sub', 'last10_video_views_per_sub_short',
+    'last10_video_views_per_sub_long', 'last10_med_video_views_cnt',
+    'last10_med_video_views_cnt_short', 'last10_med_video_views_cnt_long',
+    'last10_med_video_views_per_sub', 'last10_med_video_views_per_sub_short',
+    'last10_med_video_views_per_sub_long', 'audience_female_rate',
+    'match_score', 'viewsCount', 'likesCount', 'commentsCount', 'sharesCount',
+    'interactionRate', 'duration', 'progress', 'total', 'completed', 'failed',
+    'row_count', 'size_bytes',
+]);
+const BOOLEAN_FIELDS = new Set([
+    'has_showcase', 'has_email', 'has_mcn', 'has_line', 'has_zalo',
+    'has_whatsapp', 'is_verified', 'is_product_kol', 'is_ai_creator',
+    'include_history', 'include_summary', 'include_unread', 'include_overdue',
+    'force_new', 'is_benchmark', 'enable_benchmark',
+]);
 
-const input = await Actor.getInput();
+const input = await Actor.getInput() || {};
 
-// ---------- 1. 参数校验 ----------
-if (!input.apiKey) {
-    throw new Error('缺少必填参数 apiKey：请在 Input 中填入你的 Creatilab OpenAPI API Key。');
-}
-if (!input.userIdentity || !input.userIdentity.includes('@')) {
-    log.warning('userIdentity 不是合法邮箱，可能导致部分接口被拒。');
-}
+try {
+    validateAuth(input);
 
-const baseUrl = (input.apiBaseUrl || 'https://creativault-business.creativault.ai').replace(/\/+$/, '');
-const url = baseUrl + SEARCH_PATH;
-const maxResults = input.maxResults || 100;
-const sizePerPage = Math.min(input.sizePerPage || 50, 100);
-const maxPages = Math.min(Math.ceil(maxResults / sizePerPage), MAX_PAGES_SAFETY);
+    const client = createClient(input);
+    const operation = normalizeOperation(input.operation || 'creatorSearch');
 
-log.info(`Actor 启动 | 目标 ${maxResults} 条 | 每页 ${sizePerPage} | 最多请求 ${maxPages} 次`);
-log.info(`API 端点：${url} | service_level=${input.serviceLevel || 'S2'} | lang=${input.lang || 'en'}`);
+    log.info(`Starting CreatiVault OpenAPI actor | operation=${operation}`);
 
-// ---------- 2. 构建请求体（剔除空值）----------
-// 注意：CV 规则：筛选条件（不含 page/size/sort_*/service_level/lang）> 2 个时才返回 meta.total。
-// 因此未填的筛选项必须从 body 里剔除，否则可能改变 total 返回行为。
-const body = {
-    page: 1,
-    size: sizePerPage,
-    sort_field: input.sortField || 'followers_cnt',
-    sort_order: input.sortOrder || 'desc',
-    service_level: input.serviceLevel || 'S2',
-    lang: input.lang || 'en',
-};
-if (input.keyword) body.keyword = input.keyword;
-if (input.countryCode) body.country_code = input.countryCode;
-if (input.languageCode) body.language_code = input.languageCode;
-if (input.followersCntGte) body.followers_cnt_gte = input.followersCntGte;
-if (input.followersCntLte) body.followers_cnt_lte = input.followersCntLte;
-if (input.last10AvgVideoViewsGte) body.last10_avg_video_views_cnt_gte = input.last10AvgVideoViewsGte;
-if (input.last10AvgVideoInteractionRateGte) body.last10_avg_video_interaction_rate_gte = input.last10AvgVideoInteractionRateGte;
-if (input.hasEmail) body.has_email = input.hasEmail;
-if (input.hasMcn) body.has_mcn = input.hasMcn;
-if (input.gender) body.gender = input.gender;
-if (input.lastVideoPublishDateGte) body.last_video_publish_date_gte = input.lastVideoPublishDateGte;
-if (input.lastVideoPublishDateLte) body.last_video_publish_date_lte = input.lastVideoPublishDateLte;
-
-log.info(`筛选条件体：${JSON.stringify(body)}`);
-
-// ---------- 3. 分页抓取 ----------
-let collected = 0;
-let totalReported = null; // CV 可能不返回 total
-let totalCreditsConsumed = 0;
-
-for (let page = 1; page <= maxPages; page++) {
-    body.page = page;
-    log.info(`> 请求第 ${page}/${maxPages} 页 ...`);
-
-    const resp = await fetchWithRetry(url, body, input.apiKey, input.userIdentity, log);
-
-    if (!resp.success) {
-        const errCode = resp.error?.code;
-        const errMsg = resp.error?.message || '未知错误';
-        log.error(`CV 返回错误 [${errCode}] ${errMsg}`);
-        throw new Error(`CV OpenAPI 错误（code=${errCode}）：${errMsg}`);
-    }
-
-    const items = Array.isArray(resp.data) ? resp.data : [];
-    const meta = resp.meta || {};
-
-    // 累计成本
-    if (typeof meta.credits_consumed === 'number') {
-        totalCreditsConsumed += meta.credits_consumed;
-    }
-
-    // 首页抓取 total（后续页可能不返回）
-    if (page === 1 && typeof meta.total === 'number') {
-        totalReported = meta.total;
-        log.info(`CV 报告匹配总数：${totalReported}`);
-    }
-
-    if (items.length === 0) {
-        log.info(`第 ${page} 页无数据，结束抓取。`);
-        break;
-    }
-
-    // 注意：CV 把所有字段值强制 stringify（连数字/布尔都变字符串）。
-    // 这里还原常见数值/布尔字段，提升下游可用性。
-    const normalized = items.map((item) => restoreTypes(item));
-
-    // 推送到 Dataset（Apify 自动分批）
-    await Actor.pushData(normalized);
-    collected += items.length;
-    log.info(`* 第 ${page} 页获取 ${items.length} 条 | 累计 ${collected}/${maxResults}`);
-
-    // 达到目标数：截断
-    if (collected >= maxResults) {
-        log.info(`已达到目标条数 ${maxResults}，停止抓取。`);
-        break;
-    }
-    // 本页不足一页：说明已到末尾
-    if (items.length < sizePerPage) {
-        log.info(`本页不足一页（${items.length} < ${sizePerPage}），已到结果末尾。`);
-        break;
-    }
+    const summary = await runOperation(operation, input, client);
+    await Actor.setValue('OUTPUT', summary);
+    log.info(`Finished operation=${operation}`);
+    await Actor.exit();
+} catch (error) {
+    log.exception(error, 'Actor failed');
+    await Actor.fail(error);
 }
 
-// ---------- 4. 汇总输出 ----------
-log.info('------------------------------------------------------------');
-log.info(`抓取完成：共 ${collected} 条创作者`);
-if (totalReported !== null) {
-    log.info(`CV 报告匹配总数：${totalReported}${collected < totalReported ? '（仅抓取了前 N 条）' : ''}`);
-} else {
-    log.info('CV 未返回 total（筛选条件 <= 2 个时不查 COUNT）');
+async function runOperation(operation, input, client) {
+    switch (operation) {
+        case 'creatorSearch':
+            return creatorSearch(input, client);
+        case 'videoSearch':
+            return videoSearch(input, client);
+        case 'lookalike':
+            return lookalike(input, client);
+        case 'collectionSubmit':
+            return collectionSubmit(input, client);
+        case 'keywordCollectionSubmit':
+            return keywordCollectionSubmit(input, client);
+        case 'collectionStatus':
+            return postSingle('/openapi/v1/collection/tasks/status', buildBody(input, { task_id: input.taskId }), input, client);
+        case 'collectionData':
+            return collectionData(input, client);
+        case 'collectionExport':
+            return postSingle('/openapi/v1/collection/tasks/export', buildBody(input, {
+                task_id: input.taskId,
+                format: input.exportFormat || 'xlsx',
+            }), input, client);
+        case 'fileDownloadUrl':
+            return postSingle('/openapi/v1/files/download-url', buildBody(input, {
+                delivery_type: input.deliveryType,
+                params: input.deliveryParams,
+            }), input, client);
+        case 'mediaUpload':
+            return uploadFromUrl('/openapi/v1/media/upload', input, client);
+        case 'videoAuditSubmit':
+            return videoAuditSubmit(input, client);
+        case 'videoAuditStatus':
+            return postSingle('/openapi/v1/video-script-audit/tasks/status', buildBody(input, { task_id: input.taskId }), input, client);
+        case 'videoAuditResult':
+            return postSingle('/openapi/v1/video-script-audit/tasks/result', buildBody(input, { task_id: input.taskId }), input, client);
+        case 'outreachSend':
+            return outreachSend(input, client);
+        case 'outreachTask':
+            return postSingle('/openapi/v1/outreach/task', buildBody(input, {
+                task_id: input.taskId,
+                include_result: boolOrDefault(input.includeResult, false),
+                result_page: input.page || 1,
+                result_size: input.size || 50,
+                result_filter: input.resultFilter || 'all',
+            }), input, client);
+        case 'outreachContact':
+            return postSingle('/openapi/v1/outreach/contact', buildBody(input, {
+                email: input.email,
+                include_history: boolOrDefault(input.includeHistory, true),
+                include_summary: boolOrDefault(input.includeSummary, true),
+            }), input, client);
+        case 'outreachTodo':
+            return postSingle('/openapi/v1/outreach/todo', buildBody(input, {
+                overdue_hours: input.overdueHours || 24,
+                include_unread: boolOrDefault(input.includeUnread, true),
+                include_overdue: boolOrDefault(input.includeOverdue, true),
+            }), input, client);
+        case 'outreachMetrics':
+            return postSingle('/openapi/v1/outreach/metrics', buildBody(input, {
+                date_from: input.dateFrom,
+                date_to: input.dateTo,
+                group_by: input.groupBy,
+            }), input, client);
+        case 'outreachConfig':
+            return postSingle('/openapi/v1/outreach/config', buildBody(input, {
+                include_templates: boolOrDefault(input.includeTemplates, true),
+                template_page: input.page || 1,
+                template_size: input.size || 20,
+            }), input, client);
+        case 'outreachUpload':
+            return uploadFromUrl('/openapi/v1/outreach/upload', input, client);
+        case 'rawRequest':
+            if (!input.endpointPath) throw new Error('endpointPath is required for rawRequest.');
+            return postSingle(input.endpointPath, buildBody(input), input, client);
+        default:
+            throw new Error(`Unsupported operation: ${input.operation}`);
+    }
 }
-log.info(`累计积分消耗：${totalCreditsConsumed}`);
-log.info('------------------------------------------------------------');
 
-await Actor.exit();
+async function creatorSearch(input, client) {
+    const platform = requirePlatform(input.platform, ['tiktok', 'youtube', 'instagram']);
+    const size = clampNumber(input.size || input.sizePerPage || 50, 1, 100);
+    const maxResults = clampNumber(input.maxResults || size, 1, 100000);
+    const maxPages = Math.min(Math.ceil(maxResults / size), MAX_SEARCH_PAGES);
+    const baseBody = buildCreatorSearchBody(input, platform, size);
+    const endpoint = `/openapi/v1/creators/${platform}/search`;
 
-// ====================================================================
-// 工具函数
-// ====================================================================
+    return collectPaged({
+        client,
+        endpoint,
+        baseBody,
+        maxResults,
+        maxPages,
+        size,
+        itemsFromData: data => Array.isArray(data) ? data : [],
+        normalizeItems: items => items.map(restoreTypes),
+        label: `${platform} creator search`,
+    });
+}
 
-/**
- * 还原 CV 强制 stringify 的字段类型。
- * CV 后端把所有 data 字段值都强制转成字符串（数字 -> "123"、布尔 -> "true"），
- * 这里把常用的数值/布尔字段还原，提升 Dataset 下游可用性。
- */
-function restoreTypes(item) {
-    const NUMERIC_FIELDS = [
-        'followers_count', 'likes_count', 'video_count',
-        'avg_views', 'engagement_rate', 'views_per_follower',
-        'last10_video_views_per_sub', 'last10_med_video_views_cnt', 'last10_med_video_views_per_sub',
-        'audience_female_rate',
-    ];
-    const BOOLEAN_FIELDS = [
-        'has_showcase', 'has_email', 'has_mcn', 'has_line', 'has_zalo', 'is_verified',
-    ];
-    for (const f of NUMERIC_FIELDS) {
-        if (f in item && item[f] !== null && item[f] !== '') {
-            const n = Number(item[f]);
-            if (!Number.isNaN(n)) item[f] = n;
+async function videoSearch(input, client) {
+    const size = clampNumber(input.size || input.sizePerPage || 10, 1, 10);
+    const maxResults = clampNumber(input.maxResults || size, 1, 100);
+    const maxPages = Math.min(Math.ceil(maxResults / size), 10);
+    const body = buildBody(input, {
+        platform: clean(input.platform),
+        union_user_ids: clean(input.unionUserIds),
+        hashtag: parseList(input.hashtag),
+        video_title: clean(input.videoTitle || input.keyword),
+        video_views_cnt_gte: positiveOrUndefined(input.videoViewsCntGte),
+        video_views_cnt_lte: positiveOrUndefined(input.videoViewsCntLte),
+        video_interaction_rate_gte: positiveOrUndefined(input.videoInteractionRateGte),
+        video_interaction_rate_lte: positiveOrUndefined(input.videoInteractionRateLte),
+        video_publish_date_gte: clean(input.videoPublishDateGte || input.dateFrom),
+        video_publish_date_lte: clean(input.videoPublishDateLte || input.dateTo),
+        page: 1,
+        size,
+    });
+
+    return collectPaged({
+        client,
+        endpoint: '/openapi/v1/videos/search',
+        baseBody: body,
+        maxResults,
+        maxPages,
+        size,
+        itemsFromData: data => Array.isArray(data) ? data : [],
+        normalizeItems: items => items.map(restoreTypes),
+        label: 'video search',
+    });
+}
+
+async function lookalike(input, client) {
+    const body = buildBody(input, {
+        username: clean(input.username),
+        platform: clean(input.platform),
+        profile_url: clean(input.profileUrl),
+        target_platform: clean(input.targetPlatform),
+        target_region: clean(input.targetRegion || input.countryCode),
+        target_language: clean(input.targetLanguage || input.languageCode),
+        limit: input.limit || input.maxResults || 20,
+        follower_min: positiveOrUndefined(input.followersCntGte),
+        follower_max: positiveOrUndefined(input.followersCntLte),
+        avg_views_min: positiveOrUndefined(input.avgViewsMin || input.last10AvgVideoViewsGte),
+        avg_views_max: positiveOrUndefined(input.avgViewsMax || input.last10AvgVideoViewsLte),
+        female_rate_min: positiveOrUndefined(input.audienceFemaleRateGte),
+        lang: clean(input.lang),
+        service_level: clean(input.serviceLevel),
+    });
+    const response = await client.post('/openapi/v1/creators/lookalike', body);
+    const data = response.data || {};
+    const items = Array.isArray(data.items) ? data.items.map(restoreTypes) : [];
+    await pushOutput(items.length ? items : data, response.meta, 'lookalike');
+    return makeSummary('lookalike', response, { pushed: items.length || 1, total: data.total ?? items.length });
+}
+
+async function collectionSubmit(input, client) {
+    const body = buildBody(input, {
+        task_type: input.taskType || 'LINK_BATCH',
+        platform: requirePlatform(input.platform, ['tiktok', 'youtube', 'instagram', 'twitter']),
+        values: parseList(input.values),
+        task_name: clean(input.taskName),
+        webhook_url: clean(input.webhookUrl),
+        start_time: input.startTime,
+        end_time: input.endTime,
+    });
+    const submit = await client.post('/openapi/v1/collection/tasks/submit', body);
+    return afterAsyncSubmit('collection', submit, input, client);
+}
+
+async function keywordCollectionSubmit(input, client) {
+    const body = buildBody(input, {
+        platform: requirePlatform(input.platform, ['tiktok', 'youtube', 'instagram', 'twitter']),
+        keywords: parseList(input.keywords || input.values || input.keyword),
+        task_name: clean(input.taskName),
+        webhook_url: clean(input.webhookUrl),
+        start_time: input.startTime,
+        end_time: input.endTime,
+    });
+    const submit = await client.post('/openapi/v1/collection/tasks/keyword-submit', body);
+    return afterAsyncSubmit('collection', submit, input, client);
+}
+
+async function afterAsyncSubmit(kind, submit, input, client) {
+    const taskId = submit.data?.task_id || submit.data?.taskId;
+    if (!taskId) {
+        await pushOutput({ operation: `${kind}Submit`, data: submit.data }, submit.meta, `${kind}Submit`);
+        return makeSummary(`${kind}Submit`, submit, { pushed: 1 });
+    }
+
+    const summary = makeSummary(`${kind}Submit`, submit, { taskId, pushed: 0 });
+    const records = [{ operation: `${kind}Submit`, task_id: taskId, data: submit.data, meta: submit.meta }];
+
+    if (input.waitForCompletion) {
+        const status = await pollCollectionStatus(taskId, input, client);
+        records.push({ operation: 'collectionStatus', task_id: taskId, data: status.data, meta: status.meta });
+        summary.status = status.data?.status;
+        summary.progress = status.data?.progress;
+
+        if (status.data?.status === 'completed') {
+            if (input.fetchData) {
+                const dataSummary = await collectionData({ ...input, taskId }, client);
+                summary.data = dataSummary;
+            }
+            if (input.exportFormat) {
+                const exported = await client.post('/openapi/v1/collection/tasks/export', {
+                    task_id: taskId,
+                    format: input.exportFormat,
+                });
+                records.push({ operation: 'collectionExport', task_id: taskId, data: exported.data, meta: exported.meta });
+                summary.export = exported.data;
+            }
         }
     }
-    for (const f of BOOLEAN_FIELDS) {
-        if (f in item && typeof item[f] === 'string') {
-            item[f] = item[f] === 'true';
-        }
-    }
-    return item;
+
+    await Actor.pushData(records);
+    summary.pushed = records.length;
+    return summary;
 }
 
-/**
- * 带 401/5xx 重试的 fetch。
- * 401/403 通常是认证问题，不重试直接抛错；429/5xx 短暂重试。
- */
-async function fetchWithRetry(url, body, apiKey, userIdentity, log, maxRetries = 3) {
+async function collectionData(input, client) {
+    if (!input.taskId) throw new Error('taskId is required.');
+    const size = clampNumber(input.size || input.sizePerPage || 100, 1, 100);
+    const maxResults = clampNumber(input.maxResults || size, 1, 100000);
+    const maxPages = Math.ceil(maxResults / size);
+    return collectPaged({
+        client,
+        endpoint: '/openapi/v1/collection/tasks/data',
+        baseBody: buildBody(input, { task_id: input.taskId, page: 1, size }),
+        maxResults,
+        maxPages,
+        size,
+        itemsFromData: extractCollectionItems,
+        normalizeItems: items => items.map(restoreTypes),
+        label: 'collection data',
+    });
+}
+
+async function videoAuditSubmit(input, client) {
+    const body = buildBody(input, {
+        url: clean(input.videoUrl || input.url),
+        uploaded_oss_key: clean(input.uploadedOssKey),
+        brief: clean(input.brief),
+        user_id: clean(input.userId),
+        campaign_id: clean(input.campaignId),
+        audit_mode: input.auditMode || 'high',
+        is_benchmark: input.isBenchmark,
+        enable_benchmark: input.enableBenchmark,
+        oss_url_override: clean(input.ossUrlOverride),
+    });
+    const submit = await client.post('/openapi/v1/video-script-audit/tasks/submit', body);
+    const taskId = submit.data?.task_id || submit.data?.taskId;
+    const records = [{ operation: 'videoAuditSubmit', task_id: taskId, data: submit.data, meta: submit.meta }];
+    const summary = makeSummary('videoAuditSubmit', submit, { taskId, pushed: 0 });
+
+    if (input.waitForCompletion && taskId) {
+        const status = await pollVideoAuditStatus(taskId, input, client);
+        records.push({ operation: 'videoAuditStatus', task_id: taskId, data: status.data, meta: status.meta });
+        summary.status = status.data?.status;
+        summary.progress = status.data?.progress;
+
+        if (status.data?.status === 'completed') {
+            const result = await client.post('/openapi/v1/video-script-audit/tasks/result', { task_id: taskId });
+            records.push({ operation: 'videoAuditResult', task_id: taskId, data: result.data, meta: result.meta });
+            summary.resultAvailable = true;
+        }
+    }
+
+    await Actor.pushData(records);
+    summary.pushed = records.length;
+    return summary;
+}
+
+async function outreachSend(input, client) {
+    const body = buildBody(input, {
+        to: clean(input.to || input.email),
+        uid: clean(input.uid),
+        nickname: clean(input.nickname),
+        platform: clean(input.platform),
+        recipients: normalizeRecipients(input.recipients),
+        subject: clean(input.subject),
+        body_html: clean(input.bodyHtml),
+        body_text: clean(input.bodyText),
+        channel: input.channel || 'ses',
+        template_id: input.templateId,
+        send_mode: input.sendMode || 'immediate',
+        force_new: boolOrDefault(input.forceNew, false),
+        attachment_ids: parseList(input.attachmentIds),
+    });
+    const send = await client.post('/openapi/v1/outreach/send', body);
+    const taskId = send.data?.task_id || send.data?.taskId;
+    const records = [{ operation: 'outreachSend', task_id: taskId, data: send.data, meta: send.meta }];
+    const summary = makeSummary('outreachSend', send, { taskId, pushed: 0 });
+
+    if (input.waitForCompletion && taskId) {
+        const task = await pollOutreachTask(taskId, input, client);
+        records.push({ operation: 'outreachTask', task_id: taskId, data: task.data, meta: task.meta });
+        summary.status = task.data?.status;
+    }
+
+    await Actor.pushData(records);
+    summary.pushed = records.length;
+    return summary;
+}
+
+async function postSingle(endpoint, body, input, client) {
+    const response = await client.post(endpoint, body);
+    await pushOutput(response.data, response.meta, input.operation || endpoint);
+    return makeSummary(input.operation || endpoint, response, { pushed: 1 });
+}
+
+async function uploadFromUrl(endpoint, input, client) {
+    const fileUrl = input.fileUrl || input.mediaFileUrl;
+    if (!fileUrl) throw new Error('fileUrl is required for upload operations.');
+
+    log.info(`Downloading file for upload: ${fileUrl}`);
+    const fileResponse = await fetch(fileUrl);
+    if (!fileResponse.ok) throw new Error(`Failed to download file: HTTP ${fileResponse.status}`);
+    const contentType = fileResponse.headers.get('content-type') || 'application/octet-stream';
+    const blob = await fileResponse.blob();
+    const filename = input.filename || input.mediaFilename || filenameFromUrl(fileUrl) || 'upload.bin';
+
+    const form = new FormData();
+    form.append('file', blob, filename);
+    const response = await client.postForm(endpoint, form, contentType);
+    await pushOutput(response.data, response.meta, input.operation || endpoint);
+    return makeSummary(input.operation || endpoint, response, { pushed: 1, filename });
+}
+
+async function collectPaged(options) {
+    const { client, endpoint, baseBody, maxResults, maxPages, size, itemsFromData, normalizeItems, label } = options;
+    let collected = 0;
+    let page = baseBody.page || 1;
+    let totalReported = null;
+    let creditsConsumed = 0;
+    let lastMeta = null;
+
+    for (let i = 0; i < maxPages && collected < maxResults; i++, page++) {
+        const body = { ...baseBody, page, size };
+        log.info(`Requesting ${label} page ${page}/${maxPages}`);
+        const response = await client.post(endpoint, body);
+        lastMeta = response.meta || {};
+
+        const pageCredits = Number(lastMeta.credits_consumed);
+        if (!Number.isNaN(pageCredits)) creditsConsumed += pageCredits;
+        if (page === (baseBody.page || 1) && typeof lastMeta.total === 'number') totalReported = lastMeta.total;
+
+        const rawItems = itemsFromData(response.data);
+        const remaining = maxResults - collected;
+        const pageItems = normalizeItems(rawItems).slice(0, remaining);
+
+        if (pageItems.length > 0) {
+            await Actor.pushData(pageItems);
+            collected += pageItems.length;
+        }
+
+        log.info(`Fetched ${rawItems.length} records on page ${page}; pushed ${collected}/${maxResults}`);
+
+        if (rawItems.length === 0 || rawItems.length < size) break;
+    }
+
+    return {
+        operation: label,
+        records_pushed: collected,
+        total_reported: totalReported,
+        credits_consumed: creditsConsumed,
+        last_meta: lastMeta,
+    };
+}
+
+async function pollCollectionStatus(taskId, input, client) {
+    const intervalMs = 1000 * clampNumber(input.pollIntervalSeconds || 60, 1, 3600);
+    const maxAttempts = clampNumber(input.maxPollAttempts || 45, 1, 10000);
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        const response = await client.post('/openapi/v1/collection/tasks/status', { task_id: taskId });
+        const status = response.data?.status;
+        log.info(`Collection task ${taskId} status=${status || 'unknown'} progress=${response.data?.progress ?? 'n/a'} attempt=${attempt}/${maxAttempts}`);
+        if (TERMINAL_STATUSES.has(status)) return response;
+        await sleep(intervalMs);
+    }
+
+    throw new Error(`Collection task ${taskId} did not finish within ${maxAttempts} polling attempts.`);
+}
+
+async function pollVideoAuditStatus(taskId, input, client) {
+    const intervalMs = 1000 * clampNumber(input.pollIntervalSeconds || 10, 1, 3600);
+    const maxAttempts = clampNumber(input.maxPollAttempts || 60, 1, 10000);
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        const response = await client.post('/openapi/v1/video-script-audit/tasks/status', { task_id: taskId });
+        const status = response.data?.status;
+        log.info(`Audit task ${taskId} status=${status || 'unknown'} progress=${response.data?.progress ?? 'n/a'} attempt=${attempt}/${maxAttempts}`);
+        if (status === 'completed' || status === 'failed') return response;
+        await sleep(intervalMs);
+    }
+
+    throw new Error(`Video audit task ${taskId} did not finish within ${maxAttempts} polling attempts.`);
+}
+
+async function pollOutreachTask(taskId, input, client) {
+    const intervalMs = 1000 * clampNumber(input.pollIntervalSeconds || 15, 1, 3600);
+    const maxAttempts = clampNumber(input.maxPollAttempts || 60, 1, 10000);
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        const response = await client.post('/openapi/v1/outreach/task', {
+            task_id: taskId,
+            include_result: boolOrDefault(input.includeResult, true),
+            result_page: input.page || 1,
+            result_size: input.size || 50,
+            result_filter: input.resultFilter || 'all',
+        });
+        const status = response.data?.status;
+        log.info(`Outreach task ${taskId} status=${status || 'unknown'} attempt=${attempt}/${maxAttempts}`);
+        if (status && !['queued', 'pending', 'processing', 'accepted', 'running'].includes(status)) return response;
+        await sleep(intervalMs);
+    }
+
+    throw new Error(`Outreach task ${taskId} did not finish within ${maxAttempts} polling attempts.`);
+}
+
+function createClient(input) {
+    const baseUrl = (input.apiBaseUrl || DEFAULT_BASE_URL).replace(/\/+$/, '');
     const headers = {
-        'X-API-Key': apiKey,
-        'X-User-Identity': userIdentity,
-        'Content-Type': 'application/json',
+        'X-API-Key': input.apiKey,
+        'X-User-Identity': input.userIdentity,
+        'User-Agent': 'CreatiVault-Apify-Actor/1.0',
     };
 
-    let lastErr;
+    return {
+        async post(endpoint, body) {
+            return requestJson(baseUrl + normalizeEndpoint(endpoint), body, headers, input.maxRetries);
+        },
+        async postForm(endpoint, form) {
+            return requestForm(baseUrl + normalizeEndpoint(endpoint), form, headers, input.maxRetries);
+        },
+    };
+}
+
+async function requestJson(url, body, headers, maxRetries = 3) {
+    return withRetry(async () => {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                ...headers,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(pruneEmpty(body || {})),
+        });
+        return parseOpenApiResponse(response);
+    }, maxRetries);
+}
+
+async function requestForm(url, form, headers, maxRetries = 3) {
+    return withRetry(async () => {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers,
+            body: form,
+        });
+        return parseOpenApiResponse(response);
+    }, maxRetries);
+}
+
+async function withRetry(fn, maxRetries = 3) {
+    let lastError;
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
-            const r = await fetch(url, {
-                method: 'POST',
-                headers,
-                body: JSON.stringify(body),
-            });
-            // 401/403：认证问题，不重试
-            if (r.status === 401 || r.status === 403) {
-                const txt = await r.text().catch(() => '');
-                throw new Error(`HTTP ${r.status} 认证失败（检查 API Key / X-User-Identity）：${txt}`);
-            }
-            // 429 限流：等待后重试
-            if (r.status === 429) {
-                const wait = 2000 * attempt;
-                log.warning(`HTTP 429 限流，${wait}ms 后重试（${attempt}/${maxRetries}）`);
-                await sleep(wait);
-                continue;
-            }
-            // 5xx：服务端错误，短暂重试
-            if (r.status >= 500) {
-                const wait = 1000 * attempt;
-                log.warning(`HTTP ${r.status} 服务端错误，${wait}ms 后重试（${attempt}/${maxRetries}）`);
-                await sleep(wait);
-                continue;
-            }
-            // 解析 JSON
-            const json = await r.json();
-            return json;
-        } catch (err) {
-            lastErr = err;
-            // 认证错误直接抛，不重试
-            if (err.message && err.message.includes('认证失败')) throw err;
-            if (attempt < maxRetries) {
-                const wait = 1000 * attempt;
-                log.warning(`请求异常：${err.message}，${wait}ms 后重试（${attempt}/${maxRetries}）`);
-                await sleep(wait);
-            }
+            return await fn();
+        } catch (error) {
+            lastError = error;
+            if (!isRetryable(error) || attempt >= maxRetries) break;
+            const delayMs = retryDelay(error, attempt);
+            log.warning(`Request failed: ${error.message}. Retrying in ${delayMs}ms (${attempt}/${maxRetries})`);
+            await sleep(delayMs);
         }
     }
-    throw new Error(`请求失败（已重试 ${maxRetries} 次）：${lastErr?.message || lastErr}`);
+    throw lastError;
+}
+
+async function parseOpenApiResponse(response) {
+    const text = await response.text();
+    let json;
+    try {
+        json = text ? JSON.parse(text) : {};
+    } catch {
+        json = { success: false, error: { message: text || response.statusText } };
+    }
+
+    if (!response.ok) {
+        const message = json?.error?.message || json?.detail || response.statusText;
+        const error = new Error(`HTTP ${response.status}: ${formatDetail(message)}`);
+        error.status = response.status;
+        error.retryAfter = response.headers.get('retry-after');
+        error.payload = json;
+        throw error;
+    }
+
+    if (json && json.success === false) {
+        const code = json.error?.code;
+        const message = json.error?.message || 'OpenAPI request failed';
+        const error = new Error(`CreatiVault OpenAPI error${code ? ` ${code}` : ''}: ${message}`);
+        error.code = code;
+        error.payload = json;
+        error.retryable = code === 42901 || code === 50001;
+        throw error;
+    }
+
+    maybeLogSkillUpdate(json?.meta);
+    return json;
+}
+
+function buildCreatorSearchBody(input, platform, size) {
+    const common = {
+        page: input.page || 1,
+        size,
+        sort_field: clean(input.sortField),
+        sort_order: input.sortOrder || 'desc',
+        service_level: input.serviceLevel || 'S2',
+        lang: input.lang || 'en',
+        keyword: clean(input.keyword),
+        country_code: clean(input.countryCode),
+        language_code: clean(input.languageCode),
+        gender: normalizeGender(input.gender),
+        has_email: trueFlag(input.hasEmail),
+        followers_cnt_gte: positiveOrUndefined(input.followersCntGte),
+        followers_cnt_lte: positiveOrUndefined(input.followersCntLte),
+        industry: clean(input.industry),
+        audience_country_code_list: clean(input.audienceCountryCodeList),
+        audience_age_list: clean(input.audienceAgeList),
+        audience_female_rate_gte: positiveOrUndefined(input.audienceFemaleRateGte),
+        audience_female_rate_lte: positiveOrUndefined(input.audienceFemaleRateLte),
+    };
+
+    const platformFields = {};
+    if (platform === 'tiktok') {
+        Object.assign(platformFields, {
+            sort_field: input.sortField || 'followers_cnt',
+            has_mcn: trueFlag(input.hasMcn),
+            has_line: trueFlag(input.hasLine),
+            has_zalo: trueFlag(input.hasZalo),
+            last10_avg_video_views_cnt_gte: positiveOrUndefined(input.last10AvgVideoViewsGte),
+            last10_avg_video_views_cnt_lte: positiveOrUndefined(input.last10AvgVideoViewsLte),
+            last10_avg_video_interaction_rate_gte: positiveOrUndefined(input.last10AvgVideoInteractionRateGte),
+            last10_avg_video_interaction_rate_lte: positiveOrUndefined(input.last10AvgVideoInteractionRateLte),
+            last_video_publish_date_gte: clean(input.lastVideoPublishDateGte),
+            last_video_publish_date_lte: clean(input.lastVideoPublishDateLte),
+            product_category_id_array: clean(input.productCategoryIdArray),
+            audience_language_code_list: clean(input.audienceLanguageCodeList),
+            last30day_gmv_gte: positiveOrUndefined(input.last30dayGmvGte),
+            last30day_gmv_lte: positiveOrUndefined(input.last30dayGmvLte),
+            last30day_gpm_gte: positiveOrUndefined(input.last30dayGpmGte),
+            last30day_gpm_lte: positiveOrUndefined(input.last30dayGpmLte),
+            last30day_gmv_per_buyer_gte: positiveOrUndefined(input.last30dayGmvPerBuyerGte),
+            last30day_gmv_per_buyer_lte: positiveOrUndefined(input.last30dayGmvPerBuyerLte),
+            last30day_commission_rate_gte: positiveOrUndefined(input.last30dayCommissionRateGte),
+            last30day_commission_rate_lte: positiveOrUndefined(input.last30dayCommissionRateLte),
+        });
+    } else if (platform === 'youtube') {
+        Object.assign(platformFields, {
+            sort_field: input.sortField || 'followers_cnt',
+            has_whatsapp: trueFlag(input.hasWhatsapp),
+            is_ai_creator: trueFlag(input.isAiCreator),
+            last10_avg_video_view_count_all_gte: positiveOrUndefined(input.last10AvgVideoViewsGte),
+            last10_avg_video_view_count_all_lte: positiveOrUndefined(input.last10AvgVideoViewsLte),
+            last10_avg_video_view_count_short_gte: positiveOrUndefined(input.last10AvgShortVideoViewsGte),
+            last10_avg_video_view_count_short_lte: positiveOrUndefined(input.last10AvgShortVideoViewsLte),
+            last10_avg_interaction_rate_all_gte: positiveOrUndefined(input.last10AvgVideoInteractionRateGte),
+            last10_avg_interaction_rate_all_lte: positiveOrUndefined(input.last10AvgVideoInteractionRateLte),
+            last10_avg_interaction_rate_short_gte: positiveOrUndefined(input.last10AvgShortVideoInteractionRateGte),
+            last10_avg_interaction_rate_short_lte: positiveOrUndefined(input.last10AvgShortVideoInteractionRateLte),
+            last_video_publish_date_gte: clean(input.lastVideoPublishDateGte),
+            last_video_publish_date_lte: clean(input.lastVideoPublishDateLte),
+            audience_language_code_list: clean(input.audienceLanguageCodeList),
+        });
+    } else if (platform === 'instagram') {
+        Object.assign(platformFields, {
+            sort_field: input.sortField || 'followers_cnt',
+            has_whatsapp: trueFlag(input.hasWhatsapp),
+            is_product_kol: trueFlag(input.isProductKol),
+            is_ai_creator: trueFlag(input.isAiCreator),
+            last10_avg_video_view_count_gte: positiveOrUndefined(input.last10AvgVideoViewsGte),
+            last10_avg_video_view_count_lte: positiveOrUndefined(input.last10AvgVideoViewsLte),
+            last10_avg_video_interaction_rate_gte: positiveOrUndefined(input.last10AvgVideoInteractionRateGte),
+            last10_avg_video_interaction_rate_lte: positiveOrUndefined(input.last10AvgVideoInteractionRateLte),
+            last_video_publish_time_gte: clean(input.lastVideoPublishDateGte),
+            last_video_publish_time_lte: clean(input.lastVideoPublishDateLte),
+            female_ratio_gte: positiveOrUndefined(input.femaleRatioGte || input.audienceFemaleRateGte),
+            female_ratio_lte: positiveOrUndefined(input.femaleRatioLte || input.audienceFemaleRateLte),
+            audience_language_list: clean(input.audienceLanguageList || input.audienceLanguageCodeList),
+        });
+        delete common.audience_female_rate_gte;
+        delete common.audience_female_rate_lte;
+    }
+
+    return buildBody(input, { ...common, ...platformFields });
+}
+
+function buildBody(input, defaults = {}) {
+    const directBody = input.requestBody && typeof input.requestBody === 'object' ? input.requestBody : {};
+    const rawBody = parseRawBody(input.rawBodyJson);
+    return pruneEmpty({
+        ...defaults,
+        ...directBody,
+        ...rawBody,
+    });
+}
+
+function parseRawBody(rawBodyJson) {
+    if (!rawBodyJson) return {};
+    if (typeof rawBodyJson === 'object') return rawBodyJson;
+    try {
+        return JSON.parse(rawBodyJson);
+    } catch (error) {
+        throw new Error(`rawBodyJson is not valid JSON: ${error.message}`);
+    }
+}
+
+function extractCollectionItems(data) {
+    if (Array.isArray(data)) return data;
+    if (Array.isArray(data?.items)) return data.items;
+    if (Array.isArray(data?.data)) return data.data;
+    if (Array.isArray(data?.records)) return data.records;
+    if (Array.isArray(data?.creators)) return data.creators;
+    return [];
+}
+
+async function pushOutput(data, meta, operation) {
+    if (Array.isArray(data)) {
+        if (data.length) await Actor.pushData(data.map(restoreTypes));
+        return;
+    }
+    await Actor.pushData({ operation, data: restoreTypes(data || {}), meta: meta || null });
+}
+
+function makeSummary(operation, response, extra = {}) {
+    return {
+        operation,
+        success: response.success !== false,
+        meta: response.meta || null,
+        ...extra,
+    };
+}
+
+function restoreTypes(value) {
+    if (Array.isArray(value)) return value.map(restoreTypes);
+    if (!value || typeof value !== 'object') return value;
+    const output = {};
+    for (const [key, raw] of Object.entries(value)) {
+        if (Array.isArray(raw) || (raw && typeof raw === 'object')) {
+            output[key] = restoreTypes(raw);
+        } else if (typeof raw === 'string' && BOOLEAN_FIELDS.has(key)) {
+            output[key] = raw === 'true';
+        } else if (typeof raw === 'string' && NUMERIC_FIELDS.has(key) && raw.trim() !== '') {
+            const number = Number(raw);
+            output[key] = Number.isNaN(number) ? raw : number;
+        } else {
+            output[key] = raw;
+        }
+    }
+    return output;
+}
+
+function validateAuth(input) {
+    if (!input.apiKey) throw new Error('apiKey is required.');
+    if (!input.userIdentity) throw new Error('userIdentity is required.');
+    if (!String(input.userIdentity).includes('@')) {
+        log.warning('userIdentity does not look like an email address. The OpenAPI may reject it.');
+    }
+}
+
+function normalizeOperation(operation) {
+    const aliases = {
+        search: 'creatorSearch',
+        creator_search: 'creatorSearch',
+        creatorSearch: 'creatorSearch',
+        video_search: 'videoSearch',
+        videoSearch: 'videoSearch',
+        lookalike: 'lookalike',
+        collection_submit: 'collectionSubmit',
+        collectionSubmit: 'collectionSubmit',
+        keyword_collection_submit: 'keywordCollectionSubmit',
+        keywordCollectionSubmit: 'keywordCollectionSubmit',
+        collection_status: 'collectionStatus',
+        collectionStatus: 'collectionStatus',
+        collection_data: 'collectionData',
+        collectionData: 'collectionData',
+        collection_export: 'collectionExport',
+        collectionExport: 'collectionExport',
+        file_download_url: 'fileDownloadUrl',
+        fileDownloadUrl: 'fileDownloadUrl',
+        media_upload: 'mediaUpload',
+        mediaUpload: 'mediaUpload',
+        video_audit_submit: 'videoAuditSubmit',
+        videoAuditSubmit: 'videoAuditSubmit',
+        video_audit_status: 'videoAuditStatus',
+        videoAuditStatus: 'videoAuditStatus',
+        video_audit_result: 'videoAuditResult',
+        videoAuditResult: 'videoAuditResult',
+        outreach_send: 'outreachSend',
+        outreachSend: 'outreachSend',
+        outreach_task: 'outreachTask',
+        outreachTask: 'outreachTask',
+        outreach_contact: 'outreachContact',
+        outreachContact: 'outreachContact',
+        outreach_todo: 'outreachTodo',
+        outreachTodo: 'outreachTodo',
+        outreach_metrics: 'outreachMetrics',
+        outreachMetrics: 'outreachMetrics',
+        outreach_config: 'outreachConfig',
+        outreachConfig: 'outreachConfig',
+        outreach_upload: 'outreachUpload',
+        outreachUpload: 'outreachUpload',
+        raw: 'rawRequest',
+        rawRequest: 'rawRequest',
+    };
+    return aliases[operation] || operation;
+}
+
+function requirePlatform(platform, allowed) {
+    const normalized = clean(platform)?.toLowerCase();
+    if (!normalized) throw new Error(`platform is required. Allowed values: ${allowed.join(', ')}`);
+    if (!allowed.includes(normalized)) throw new Error(`Invalid platform "${platform}". Allowed values: ${allowed.join(', ')}`);
+    return normalized;
+}
+
+function normalizeEndpoint(endpoint) {
+    return endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+}
+
+function pruneEmpty(obj) {
+    if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return obj;
+    const output = {};
+    for (const [key, value] of Object.entries(obj)) {
+        if (value === undefined || value === null || value === '') continue;
+        if (Array.isArray(value) && value.length === 0) continue;
+        output[key] = value;
+    }
+    return output;
+}
+
+function clean(value) {
+    if (value === undefined || value === null) return undefined;
+    if (typeof value === 'string') {
+        const trimmed = value.trim();
+        return trimmed === '' ? undefined : trimmed;
+    }
+    return value;
+}
+
+function positiveOrUndefined(value) {
+    if (value === undefined || value === null || value === '') return undefined;
+    const n = Number(value);
+    if (Number.isNaN(n) || n < 0) return undefined;
+    if (n === 0) return undefined;
+    return n;
+}
+
+function clampNumber(value, min, max) {
+    const n = Number(value);
+    if (Number.isNaN(n)) return min;
+    return Math.max(min, Math.min(max, Math.floor(n)));
+}
+
+function parseList(value) {
+    if (value === undefined || value === null || value === '') return undefined;
+    if (Array.isArray(value)) return value.map(v => String(v).trim()).filter(Boolean);
+    return String(value).split('\n').flatMap(part => part.split(',')).map(v => v.trim()).filter(Boolean);
+}
+
+function normalizeRecipients(value) {
+    if (!value) return undefined;
+    if (Array.isArray(value)) return value;
+    if (typeof value === 'string') {
+        try {
+            const parsed = JSON.parse(value);
+            if (Array.isArray(parsed)) return parsed;
+        } catch {
+            // Fall through.
+        }
+    }
+    throw new Error('recipients must be an array or a JSON array string.');
+}
+
+function normalizeGender(value) {
+    const v = clean(value);
+    if (!v) return undefined;
+    const lower = String(v).toLowerCase();
+    if (['female', 'woman', 'women', 'f', '0'].includes(lower)) return '0';
+    if (['male', 'man', 'men', 'm', '1'].includes(lower)) return '1';
+    return String(v);
+}
+
+function boolOrDefault(value, defaultValue) {
+    return value === undefined || value === null ? defaultValue : Boolean(value);
+}
+
+function trueFlag(value) {
+    return value === true ? true : undefined;
+}
+
+function formatDetail(detail) {
+    return typeof detail === 'string' ? detail : JSON.stringify(detail);
+}
+
+function isRetryable(error) {
+    if (error.retryable) return true;
+    if (error.status === 429) return true;
+    if (error.status >= 500) return true;
+    return false;
+}
+
+function retryDelay(error, attempt) {
+    const retryAfter = Number(error.retryAfter);
+    if (!Number.isNaN(retryAfter) && retryAfter > 0) return retryAfter * 1000;
+    return Math.min(30000, 1000 * attempt * attempt);
+}
+
+function maybeLogSkillUpdate(meta) {
+    if (!meta?.skill_update_available) return;
+    const current = meta.skill_current_version || 'unknown';
+    const latest = meta.skill_latest_version || 'unknown';
+    const required = meta.skill_update_required ? 'required' : 'available';
+    log.warning(`CreatiVault skill update ${required}: ${current} -> ${latest}. Run "node scripts/skill_update.mjs --yes" in the skill package if you use local skill scripts.`);
+}
+
+function filenameFromUrl(fileUrl) {
+    try {
+        const url = new URL(fileUrl);
+        const last = url.pathname.split('/').filter(Boolean).pop();
+        return last ? decodeURIComponent(last) : null;
+    } catch {
+        return null;
+    }
 }
 
 function sleep(ms) {
-    return new Promise((resolve) => setTimeout(resolve, ms));
+    return new Promise(resolve => setTimeout(resolve, ms));
 }

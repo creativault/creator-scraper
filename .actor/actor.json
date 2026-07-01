@@ -1,9 +1,9 @@
 {
     "actorSpecification": 1,
-    "name": "tiktok-creator-search",
-    "title": "TikTok Creator Search",
-    "description": "TikTok creator search with multi-dimensional filtering — followers, engagement, audience demographics, contact info & commerce (GMV). Tiered data depth (S1/S2/S3). Powered by Creatilab OpenAPI.",
-    "version": "0.1.0",
+    "name": "creativault-openapi",
+    "title": "CreatiVault OpenAPI",
+    "description": "Full CreatiVault OpenAPI actor for creator search, video search, lookalike discovery, collection tasks, exports, video audit, outreach, uploads, and raw endpoint calls.",
+    "version": "1.0.0",
     "buildTag": "latest",
     "meta": {
         "templateId": "starter-javascript"
@@ -12,33 +12,49 @@
     "storages": {
         "dataset": {
             "actorSpecification": 1,
-            "title": "TikTok Creators",
+            "title": "CreatiVault Results",
             "views": {
                 "overview": {
                     "title": "Overview",
                     "transformation": {
                         "fields": [
+                            "operation",
+                            "platform",
                             "uid",
                             "username",
                             "nickname",
                             "followers_count",
+                            "avg_views",
                             "engagement_rate",
                             "country_code",
                             "has_email",
-                            "email"
+                            "email",
+                            "videoTitle",
+                            "videoUrl",
+                            "task_id",
+                            "status",
+                            "file_url"
                         ]
                     },
                     "display": {
                         "component": "table",
                         "columns": [
+                            { "label": "Operation", "source": "operation", "align": "left" },
+                            { "label": "Platform", "source": "platform", "align": "left" },
                             { "label": "UID", "source": "uid", "align": "left" },
                             { "label": "Username", "source": "username", "align": "left" },
                             { "label": "Nickname", "source": "nickname", "align": "left" },
                             { "label": "Followers", "source": "followers_count", "align": "right" },
+                            { "label": "Avg Views", "source": "avg_views", "align": "right" },
                             { "label": "Engagement", "source": "engagement_rate", "align": "right" },
                             { "label": "Country", "source": "country_code", "align": "center" },
                             { "label": "Has Email", "source": "has_email", "align": "center" },
-                            { "label": "Email", "source": "email", "align": "left" }
+                            { "label": "Email", "source": "email", "align": "left" },
+                            { "label": "Video", "source": "videoTitle", "align": "left" },
+                            { "label": "Video URL", "source": "videoUrl", "align": "left" },
+                            { "label": "Task ID", "source": "task_id", "align": "left" },
+                            { "label": "Status", "source": "status", "align": "left" },
+                            { "label": "File URL", "source": "file_url", "align": "left" }
                         ]
                     }
                 }

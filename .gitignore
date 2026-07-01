@@ -1,23 +1,23 @@
 # Dependencies
 node_modules/
 
-# Apify local storage（本地测试产物）
+# Apify local storage
 storage/
 apify_storage/
 
-# 日志
+# Logs
 *.log
 npm-debug.log*
 
-# 环境变量 / 密钥（切勿提交）
+# Environment variables and secrets
 .env
 .env.local
 
-# 操作系统
+# Operating system files
 .DS_Store
 Thumbs.db
 
-# 编辑器
+# Editors
 .idea/
 .vscode/
 *.swp
