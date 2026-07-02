@@ -3,7 +3,7 @@
   "name": "creativault-video-search",
   "title": "CreatiVault Video Search",
   "description": "Search short-form videos across TikTok, Instagram, and YouTube by hashtag, title, views, interaction rate, and publish date.",
-  "version": "1.0.0",
+  "version": "1.0",
   "buildTag": "latest",
   "meta": {
     "templateId": "starter-javascript"

@@ -3,7 +3,7 @@
     "name": "creativault-openapi",
     "title": "CreatiVault OpenAPI",
     "description": "Full CreatiVault OpenAPI actor for creator search, video search, lookalike discovery, collection tasks, exports, video audit, outreach, uploads, and raw endpoint calls.",
-    "version": "1.0.0",
+    "version": "1.0",
     "buildTag": "latest",
     "meta": {
         "templateId": "starter-javascript"

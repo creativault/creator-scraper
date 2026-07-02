@@ -3,7 +3,7 @@
   "name": "creativault-lookalike-finder",
   "title": "CreatiVault Lookalike Creator Finder",
   "description": "Find similar creators from a seed username or profile URL across TikTok, Instagram, and YouTube.",
-  "version": "1.0.0",
+  "version": "1.0",
   "buildTag": "latest",
   "meta": {
     "templateId": "starter-javascript"

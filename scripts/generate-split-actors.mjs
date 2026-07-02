@@ -331,7 +331,7 @@ function makeActorJson(actor) {
         name: actor.name,
         title: actor.title,
         description: actor.description,
-        version: '1.0.0',
+        version: '1.0',
         buildTag: 'latest',
         meta: { templateId: 'starter-javascript' },
         input: './INPUT_SCHEMA.json',
