@@ -5,6 +5,19 @@ await Actor.init();
 const DEFAULT_BASE_URL = 'https://creativault-business.creativault.ai';
 const MAX_SEARCH_PAGES = 200;
 const TERMINAL_STATUSES = new Set(['completed', 'failed', 'timeout']);
+const CHARGE_EVENTS = {
+    creatorResultS1: 'creator-result-s1',
+    creatorResultS2: 'creator-result-s2',
+    creatorResultS3: 'creator-result-s3',
+    videoResult: 'video-result',
+    lookalikeResult: 'lookalike-result',
+    collectionSubmit: 'collection-submit',
+    collectionExport: 'collection-export',
+    collectionDataResult: 'collection-data-result',
+    videoAuditSubmit: 'video-audit-submit',
+    mediaUpload: 'media-upload',
+    outreachEmail: 'outreach-email',
+};
 const NUMERIC_FIELDS = new Set([
     'followers_count', 'followers_cnt', 'likes_count', 'video_count', 'view_count',
     'avg_views', 'avg_views_short', 'avg_views_long', 'engagement_rate',
@@ -28,9 +41,10 @@ const BOOLEAN_FIELDS = new Set([
 const input = await Actor.getInput() || {};
 
 try {
-    validateAuth(input);
+    const auth = resolveAuth(input);
+    validateAuth(auth);
 
-    const client = createClient(input);
+    const client = createClient(input, auth);
     const operation = normalizeOperation(input.operation || 'creatorSearch');
 
     log.info(`Starting CreatiVault OpenAPI actor | operation=${operation}`);
@@ -64,14 +78,14 @@ async function runOperation(operation, input, client) {
             return postSingle('/openapi/v1/collection/tasks/export', buildBody(input, {
                 task_id: input.taskId,
                 format: input.exportFormat || 'xlsx',
-            }), input, client);
+            }), input, client, CHARGE_EVENTS.collectionExport);
         case 'fileDownloadUrl':
             return postSingle('/openapi/v1/files/download-url', buildBody(input, {
                 delivery_type: input.deliveryType,
                 params: input.deliveryParams,
             }), input, client);
         case 'mediaUpload':
-            return uploadFromUrl('/openapi/v1/media/upload', input, client);
+            return uploadFromUrl('/openapi/v1/media/upload', input, client, CHARGE_EVENTS.mediaUpload);
         case 'videoAuditSubmit':
             return videoAuditSubmit(input, client);
         case 'videoAuditStatus':
@@ -115,6 +129,9 @@ async function runOperation(operation, input, client) {
         case 'outreachUpload':
             return uploadFromUrl('/openapi/v1/outreach/upload', input, client);
         case 'rawRequest':
+            if (process.env.CV_ENABLE_RAW_REQUEST !== 'true') {
+                throw new Error('rawRequest is disabled for public Store runs.');
+            }
             if (!input.endpointPath) throw new Error('endpointPath is required for rawRequest.');
             return postSingle(input.endpointPath, buildBody(input), input, client);
         default:
@@ -140,6 +157,7 @@ async function creatorSearch(input, client) {
         itemsFromData: data => Array.isArray(data) ? data : [],
         normalizeItems: items => items.map(restoreTypes),
         label: `${platform} creator search`,
+        chargeEventName: creatorChargeEvent(baseBody.service_level),
     });
 }
 
@@ -172,6 +190,7 @@ async function videoSearch(input, client) {
         itemsFromData: data => Array.isArray(data) ? data : [],
         normalizeItems: items => items.map(restoreTypes),
         label: 'video search',
+        chargeEventName: CHARGE_EVENTS.videoResult,
     });
 }
 
@@ -195,8 +214,14 @@ async function lookalike(input, client) {
     const response = await client.post('/openapi/v1/creators/lookalike', body);
     const data = response.data || {};
     const items = Array.isArray(data.items) ? data.items.map(restoreTypes) : [];
-    await pushOutput(items.length ? items : data, response.meta, 'lookalike');
-    return makeSummary('lookalike', response, { pushed: items.length || 1, total: data.total ?? items.length });
+    const chargedItems = await chargeAndLimitItems(CHARGE_EVENTS.lookalikeResult, items);
+    await pushOutput(chargedItems.length ? chargedItems : data, response.meta, 'lookalike');
+    return makeSummary('lookalike', response, {
+        pushed: chargedItems.length || 1,
+        charged: chargedItems.length,
+        total: data.total ?? items.length,
+        charge_event: CHARGE_EVENTS.lookalikeResult,
+    });
 }
 
 async function collectionSubmit(input, client) {
@@ -209,6 +234,7 @@ async function collectionSubmit(input, client) {
         start_time: input.startTime,
         end_time: input.endTime,
     });
+    ensureChargeCapacity(CHARGE_EVENTS.collectionSubmit, 1);
     const submit = await client.post('/openapi/v1/collection/tasks/submit', body);
     return afterAsyncSubmit('collection', submit, input, client);
 }
@@ -222,6 +248,7 @@ async function keywordCollectionSubmit(input, client) {
         start_time: input.startTime,
         end_time: input.endTime,
     });
+    ensureChargeCapacity(CHARGE_EVENTS.collectionSubmit, 1);
     const submit = await client.post('/openapi/v1/collection/tasks/keyword-submit', body);
     return afterAsyncSubmit('collection', submit, input, client);
 }
@@ -233,7 +260,17 @@ async function afterAsyncSubmit(kind, submit, input, client) {
         return makeSummary(`${kind}Submit`, submit, { pushed: 1 });
     }
 
-    const summary = makeSummary(`${kind}Submit`, submit, { taskId, pushed: 0 });
+    const submitCharge = await chargeForEvent(CHARGE_EVENTS.collectionSubmit, 1);
+    const summary = makeSummary(`${kind}Submit`, submit, {
+        taskId,
+        pushed: 0,
+        charged: submitCharge.chargedCount,
+        charge_event: CHARGE_EVENTS.collectionSubmit,
+    });
+    if (submitCharge.chargedCount <= 0) {
+        summary.charge_limit_reached = true;
+        return summary;
+    }
     const records = [{ operation: `${kind}Submit`, task_id: taskId, data: submit.data, meta: submit.meta }];
 
     if (input.waitForCompletion) {
@@ -248,12 +285,15 @@ async function afterAsyncSubmit(kind, submit, input, client) {
                 summary.data = dataSummary;
             }
             if (input.exportFormat) {
+                ensureChargeCapacity(CHARGE_EVENTS.collectionExport, 1);
                 const exported = await client.post('/openapi/v1/collection/tasks/export', {
                     task_id: taskId,
                     format: input.exportFormat,
                 });
+                const exportCharge = await chargeForEvent(CHARGE_EVENTS.collectionExport, 1);
                 records.push({ operation: 'collectionExport', task_id: taskId, data: exported.data, meta: exported.meta });
                 summary.export = exported.data;
+                summary.export_charged = exportCharge.chargedCount;
             }
         }
     }
@@ -278,6 +318,7 @@ async function collectionData(input, client) {
         itemsFromData: extractCollectionItems,
         normalizeItems: items => items.map(restoreTypes),
         label: 'collection data',
+        chargeEventName: CHARGE_EVENTS.collectionDataResult,
     });
 }
 
@@ -293,10 +334,21 @@ async function videoAuditSubmit(input, client) {
         enable_benchmark: input.enableBenchmark,
         oss_url_override: clean(input.ossUrlOverride),
     });
+    ensureChargeCapacity(CHARGE_EVENTS.videoAuditSubmit, 1);
     const submit = await client.post('/openapi/v1/video-script-audit/tasks/submit', body);
     const taskId = submit.data?.task_id || submit.data?.taskId;
+    const submitCharge = await chargeForEvent(CHARGE_EVENTS.videoAuditSubmit, 1);
     const records = [{ operation: 'videoAuditSubmit', task_id: taskId, data: submit.data, meta: submit.meta }];
-    const summary = makeSummary('videoAuditSubmit', submit, { taskId, pushed: 0 });
+    const summary = makeSummary('videoAuditSubmit', submit, {
+        taskId,
+        pushed: 0,
+        charged: submitCharge.chargedCount,
+        charge_event: CHARGE_EVENTS.videoAuditSubmit,
+    });
+    if (submitCharge.chargedCount <= 0) {
+        summary.charge_limit_reached = true;
+        return summary;
+    }
 
     if (input.waitForCompletion && taskId) {
         const status = await pollVideoAuditStatus(taskId, input, client);
@@ -332,10 +384,22 @@ async function outreachSend(input, client) {
         force_new: boolOrDefault(input.forceNew, false),
         attachment_ids: parseList(input.attachmentIds),
     });
+    const recipientCount = body.recipients ? body.recipients.length : 1;
+    ensureChargeCapacity(CHARGE_EVENTS.outreachEmail, recipientCount);
     const send = await client.post('/openapi/v1/outreach/send', body);
+    const sendCharge = await chargeForEvent(CHARGE_EVENTS.outreachEmail, recipientCount);
     const taskId = send.data?.task_id || send.data?.taskId;
     const records = [{ operation: 'outreachSend', task_id: taskId, data: send.data, meta: send.meta }];
-    const summary = makeSummary('outreachSend', send, { taskId, pushed: 0 });
+    const summary = makeSummary('outreachSend', send, {
+        taskId,
+        pushed: 0,
+        charged: sendCharge.chargedCount,
+        charge_event: CHARGE_EVENTS.outreachEmail,
+    });
+    if (sendCharge.chargedCount <= 0) {
+        summary.charge_limit_reached = true;
+        return summary;
+    }
 
     if (input.waitForCompletion && taskId) {
         const task = await pollOutreachTask(taskId, input, client);
@@ -348,15 +412,30 @@ async function outreachSend(input, client) {
     return summary;
 }
 
-async function postSingle(endpoint, body, input, client) {
+async function postSingle(endpoint, body, input, client, chargeEventName = null) {
+    if (chargeEventName) ensureChargeCapacity(chargeEventName, 1);
     const response = await client.post(endpoint, body);
+    const charge = chargeEventName ? await chargeForEvent(chargeEventName, 1) : null;
+    if (chargeEventName && charge.chargedCount <= 0) {
+        return makeSummary(input.operation || endpoint, response, {
+            pushed: 0,
+            charged: 0,
+            charge_event: chargeEventName,
+            charge_limit_reached: true,
+        });
+    }
     await pushOutput(response.data, response.meta, input.operation || endpoint);
-    return makeSummary(input.operation || endpoint, response, { pushed: 1 });
+    return makeSummary(input.operation || endpoint, response, {
+        pushed: 1,
+        charged: charge?.chargedCount || 0,
+        charge_event: chargeEventName,
+    });
 }
 
-async function uploadFromUrl(endpoint, input, client) {
+async function uploadFromUrl(endpoint, input, client, chargeEventName = null) {
     const fileUrl = input.fileUrl || input.mediaFileUrl;
     if (!fileUrl) throw new Error('fileUrl is required for upload operations.');
+    if (chargeEventName) ensureChargeCapacity(chargeEventName, 1);
 
     log.info(`Downloading file for upload: ${fileUrl}`);
     const fileResponse = await fetch(fileUrl);
@@ -368,13 +447,29 @@ async function uploadFromUrl(endpoint, input, client) {
     const form = new FormData();
     form.append('file', blob, filename);
     const response = await client.postForm(endpoint, form, contentType);
+    const charge = chargeEventName ? await chargeForEvent(chargeEventName, 1) : null;
+    if (chargeEventName && charge.chargedCount <= 0) {
+        return makeSummary(input.operation || endpoint, response, {
+            pushed: 0,
+            charged: 0,
+            filename,
+            charge_event: chargeEventName,
+            charge_limit_reached: true,
+        });
+    }
     await pushOutput(response.data, response.meta, input.operation || endpoint);
-    return makeSummary(input.operation || endpoint, response, { pushed: 1, filename });
+    return makeSummary(input.operation || endpoint, response, {
+        pushed: 1,
+        charged: charge?.chargedCount || 0,
+        charge_event: chargeEventName,
+        filename,
+    });
 }
 
 async function collectPaged(options) {
-    const { client, endpoint, baseBody, maxResults, maxPages, size, itemsFromData, normalizeItems, label } = options;
+    const { client, endpoint, baseBody, maxResults, maxPages, size, itemsFromData, normalizeItems, label, chargeEventName } = options;
     let collected = 0;
+    let charged = 0;
     let page = baseBody.page || 1;
     let totalReported = null;
     let creditsConsumed = 0;
@@ -395,8 +490,18 @@ async function collectPaged(options) {
         const pageItems = normalizeItems(rawItems).slice(0, remaining);
 
         if (pageItems.length > 0) {
-            await Actor.pushData(pageItems);
-            collected += pageItems.length;
+            const chargedItems = await chargeAndLimitItems(chargeEventName, pageItems);
+            if (chargedItems.length === 0) {
+                log.info(`Charge limit reached for ${chargeEventName}; stopping before pushing more ${label} records.`);
+                break;
+            }
+            await Actor.pushData(chargedItems);
+            collected += chargedItems.length;
+            charged += chargeEventName ? chargedItems.length : 0;
+            if (chargedItems.length < pageItems.length) {
+                log.info(`Only ${chargedItems.length}/${pageItems.length} ${label} records were charged within the user limit.`);
+                break;
+            }
         }
 
         log.info(`Fetched ${rawItems.length} records on page ${page}; pushed ${collected}/${maxResults}`);
@@ -407,6 +512,8 @@ async function collectPaged(options) {
     return {
         operation: label,
         records_pushed: collected,
+        records_charged: charged,
+        charge_event: chargeEventName || null,
         total_reported: totalReported,
         credits_consumed: creditsConsumed,
         last_meta: lastMeta,
@@ -464,11 +571,12 @@ async function pollOutreachTask(taskId, input, client) {
     throw new Error(`Outreach task ${taskId} did not finish within ${maxAttempts} polling attempts.`);
 }
 
-function createClient(input) {
-    const baseUrl = (input.apiBaseUrl || DEFAULT_BASE_URL).replace(/\/+$/, '');
+function createClient(input, auth) {
+    const allowInputBaseUrl = process.env.CV_ALLOW_INPUT_BASE_URL === 'true' || Boolean(clean(input.apiKey));
+    const baseUrl = ((allowInputBaseUrl ? input.apiBaseUrl : null) || process.env.CV_API_BASE_URL || DEFAULT_BASE_URL).replace(/\/+$/, '');
     const headers = {
-        'X-API-Key': input.apiKey,
-        'X-User-Identity': input.userIdentity,
+        'X-API-Key': auth.apiKey,
+        'X-User-Identity': auth.userIdentity,
         'User-Agent': 'CreatiVault-Apify-Actor/1.0',
     };
 
@@ -678,6 +786,56 @@ async function pushOutput(data, meta, operation) {
     await Actor.pushData({ operation, data: restoreTypes(data || {}), meta: meta || null });
 }
 
+async function chargeAndLimitItems(eventName, items) {
+    if (!eventName || items.length === 0) return items;
+    const charge = await chargeForEvent(eventName, items.length);
+    const allowedCount = Math.min(charge.chargedCount, items.length);
+    if (allowedCount < items.length) {
+        log.warning(`Charge limit reduced output for ${eventName}: ${allowedCount}/${items.length} records allowed.`);
+    }
+    return items.slice(0, allowedCount);
+}
+
+async function chargeForEvent(eventName, count = 1) {
+    if (!eventName || count <= 0) {
+        return { eventChargeLimitReached: false, chargedCount: 0, chargeableWithinLimit: {} };
+    }
+    if (process.env.CV_DISABLE_APIFY_CHARGING === 'true') {
+        return { eventChargeLimitReached: false, chargedCount: count, chargeableWithinLimit: {} };
+    }
+
+    const manager = Actor.getChargingManager();
+    const pricingInfo = manager.getPricingInfo();
+    if (!pricingInfo.isPayPerEvent) {
+        return { eventChargeLimitReached: false, chargedCount: count, chargeableWithinLimit: {} };
+    }
+    if (!(eventName in pricingInfo.perEventPrices)) {
+        throw new Error(`Apify PPE event "${eventName}" is not configured in Actor monetization settings.`);
+    }
+
+    const charge = await Actor.charge({ eventName, count });
+    if (charge.eventChargeLimitReached) {
+        log.info(`Apify charge limit reached for event ${eventName}. charged=${charge.chargedCount}/${count}`);
+    }
+    return charge;
+}
+
+function ensureChargeCapacity(eventName, count = 1) {
+    if (!eventName || count <= 0 || process.env.CV_DISABLE_APIFY_CHARGING === 'true') return;
+
+    const manager = Actor.getChargingManager();
+    const pricingInfo = manager.getPricingInfo();
+    if (!pricingInfo.isPayPerEvent) return;
+    if (!(eventName in pricingInfo.perEventPrices)) {
+        throw new Error(`Apify PPE event "${eventName}" is not configured in Actor monetization settings.`);
+    }
+
+    const capacity = manager.calculateMaxEventChargeCountWithinLimit(eventName);
+    if (capacity < count) {
+        throw new Error(`The run charge limit allows only ${capacity} "${eventName}" events, but ${count} are required.`);
+    }
+}
+
 function makeSummary(operation, response, extra = {}) {
     return {
         operation,
@@ -706,12 +864,32 @@ function restoreTypes(value) {
     return output;
 }
 
-function validateAuth(input) {
-    if (!input.apiKey) throw new Error('apiKey is required.');
-    if (!input.userIdentity) throw new Error('userIdentity is required.');
-    if (!String(input.userIdentity).includes('@')) {
+function resolveAuth(input) {
+    return {
+        apiKey: clean(input.apiKey) || clean(process.env.CV_API_KEY),
+        userIdentity: clean(input.userIdentity) || clean(process.env.CV_USER_IDENTITY) || buildStoreUserIdentity(),
+    };
+}
+
+function validateAuth(auth) {
+    if (!auth.apiKey) throw new Error('Missing CV_API_KEY environment variable.');
+    if (!auth.userIdentity) throw new Error('Missing CV_USER_IDENTITY environment variable.');
+    if (!String(auth.userIdentity).includes('@')) {
         log.warning('userIdentity does not look like an email address. The OpenAPI may reject it.');
     }
+}
+
+function buildStoreUserIdentity() {
+    const rawId = process.env.APIFY_USER_ID || process.env.ACTOR_RUN_ID || process.env.APIFY_ACTOR_RUN_ID || 'anonymous';
+    const safeId = String(rawId).toLowerCase().replace(/[^a-z0-9._-]+/g, '-').slice(0, 64);
+    return `apify-store+${safeId}@creativault.ai`;
+}
+
+function creatorChargeEvent(serviceLevel) {
+    const level = String(serviceLevel || 'S2').toUpperCase();
+    if (level === 'S1') return CHARGE_EVENTS.creatorResultS1;
+    if (level === 'S3') return CHARGE_EVENTS.creatorResultS3;
+    return CHARGE_EVENTS.creatorResultS2;
 }
 
 function normalizeOperation(operation) {

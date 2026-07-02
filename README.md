@@ -1,8 +1,10 @@
 # CreatiVault OpenAPI Actor
 
-Apify actor for the CreatiVault OpenAPI creator ecosystem.
+Apify Store actor for the CreatiVault creator ecosystem.
 
-This actor is no longer limited to the MVP TikTok search endpoint. It supports:
+The public Store version does not ask users for a CreatiVault API key. The Actor owner configures the upstream key as an Apify secret/environment variable, and the actor charges Store users with Apify Pay per event (PPE).
+
+## Capabilities
 
 - Creator search: TikTok, YouTube, Instagram
 - Video search: cross-platform short-video discovery
@@ -14,37 +16,52 @@ This actor is no longer limited to the MVP TikTok search endpoint. It supports:
 - Media upload for video audit
 - Outreach send/task/contact/todo/metrics/config
 - Outreach attachment upload
-- Raw POST calls to any CreatiVault OpenAPI path
+- Raw POST calls for internal/debug usage
 
-## Required Input
+## Owner Configuration
 
-```json
-{
-  "operation": "creatorSearch",
-  "apiKey": "cv_live_xxx",
-  "userIdentity": "operator@example.com"
-}
-```
-
-The actor sends:
-
-- `X-API-Key: apiKey`
-- `X-User-Identity: userIdentity`
-- `Content-Type: application/json` for normal endpoints
-
-Default base URL:
+Configure these in Apify Console as Actor environment variables or secrets:
 
 ```text
-https://creativault-business.creativault.ai
+CV_API_KEY=your_creativault_openapi_key
+CV_USER_IDENTITY=apify-store@creativault.ai
+CV_API_BASE_URL=https://creativault-business.creativault.ai
 ```
 
-## Creator Search
+Optional internal/debug variables:
+
+```text
+CV_DISABLE_APIFY_CHARGING=true
+CV_ALLOW_INPUT_BASE_URL=true
+```
+
+Do not expose `CV_API_KEY` or `CV_ALLOW_INPUT_BASE_URL` in the public input schema.
+
+## Monetization Events
+
+Create these custom PPE events in Apify Console under Publication -> Monetization:
+
+| Event name | Suggested price |
+|---|---:|
+| `creator-result-s1` | `$0.0012` |
+| `creator-result-s2` | `$0.0040` |
+| `creator-result-s3` | `$0.0080` |
+| `video-result` | `$0.0015` |
+| `lookalike-result` | `$0.0060` |
+| `collection-submit` | `$0.0500` |
+| `collection-export` | `$0.0300` |
+| `collection-data-result` | `$0.0020` |
+| `video-audit-submit` | `$0.8000` |
+| `media-upload` | `$0.0800` |
+| `outreach-email` | `$0.0400` |
+
+Recommended: remove or set `apify-default-dataset-item` to zero/disabled. This actor uses custom events because `S1`, `S2`, `S3`, video search, audits, and outreach have different values and costs.
+
+## Public Input Example
 
 ```json
 {
   "operation": "creatorSearch",
-  "apiKey": "cv_live_xxx",
-  "userIdentity": "operator@example.com",
   "platform": "tiktok",
   "countryCode": "US",
   "hasEmail": true,
@@ -55,21 +72,44 @@ https://creativault-business.creativault.ai
 }
 ```
 
-The actor maps common fields to platform-specific backend fields:
+The actor sends these headers to CreatiVault:
 
-- TikTok: `last10_avg_video_views_cnt_*`, `last10_avg_video_interaction_rate_*`
-- YouTube: `last10_avg_video_view_count_all_*`, `last10_avg_interaction_rate_all_*`
-- Instagram: `last10_avg_video_view_count_*`, `last10_avg_video_interaction_rate_*`
+- `X-API-Key: process.env.CV_API_KEY`
+- `X-User-Identity: CV_USER_IDENTITY` or a synthetic Apify Store identity
+- `Content-Type: application/json` for normal endpoints
 
-Use `requestBody` or `rawBodyJson` for fields not exposed in the UI.
+## Charging Behavior
 
-## Video Search
+The actor charges only after successful CreatiVault OpenAPI responses.
+
+- Empty searches are not charged.
+- Failed OpenAPI calls are not charged.
+- Status polling is not charged.
+- Paged result operations charge only the records pushed to the default dataset.
+- Fixed operations such as collection submit, export, media upload, video audit submit, and outreach send use one custom event per accepted action.
+- If a user's Apify max charge limit is too low, the actor stops before producing more billable output.
+
+## Operation Examples
+
+### Creator Search
+
+```json
+{
+  "operation": "creatorSearch",
+  "platform": "instagram",
+  "countryCode": "US",
+  "industry": "Beauty",
+  "hasEmail": true,
+  "serviceLevel": "S2",
+  "maxResults": 50
+}
+```
+
+### Video Search
 
 ```json
 {
   "operation": "videoSearch",
-  "apiKey": "cv_live_xxx",
-  "userIdentity": "operator@example.com",
   "platform": "tiktok",
   "hashtag": ["skincare"],
   "videoViewsCntGte": 100000,
@@ -78,15 +118,11 @@ Use `requestBody` or `rawBodyJson` for fields not exposed in the UI.
 }
 ```
 
-Video search uses `/openapi/v1/videos/search`. Backend page size is capped at 10.
-
-## Collection With Poll And Export
+### Collection With Poll And Export
 
 ```json
 {
   "operation": "collectionSubmit",
-  "apiKey": "cv_live_xxx",
-  "userIdentity": "operator@example.com",
   "platform": "tiktok",
   "taskType": "LINK_BATCH",
   "values": [
@@ -100,36 +136,11 @@ Video search uses `/openapi/v1/videos/search`. Backend page size is capped at 10
 }
 ```
 
-Supported collection task types:
-
-- `LINK_BATCH`
-- `FILE_UPLOAD`
-- `CREATOR_VIDEO`
-- `POST_VIDEO`
-
-Twitter/X supports `LINK_BATCH` and `FILE_UPLOAD`; video collection is not supported by the backend for Twitter/X.
-
-## Keyword Collection
-
-```json
-{
-  "operation": "keywordCollectionSubmit",
-  "apiKey": "cv_live_xxx",
-  "userIdentity": "operator@example.com",
-  "platform": "instagram",
-  "keywords": ["beauty tips", "skincare routine"],
-  "waitForCompletion": true,
-  "exportFormat": "csv"
-}
-```
-
-## Lookalike
+### Lookalike
 
 ```json
 {
   "operation": "lookalike",
-  "apiKey": "cv_live_xxx",
-  "userIdentity": "operator@example.com",
   "profileUrl": "https://www.tiktok.com/@somecreator",
   "targetPlatform": "instagram",
   "countryCode": "US",
@@ -137,15 +148,11 @@ Twitter/X supports `LINK_BATCH` and `FILE_UPLOAD`; video collection is not suppo
 }
 ```
 
-## Video Audit
-
-Submit by social video URL:
+### Video Audit
 
 ```json
 {
   "operation": "videoAuditSubmit",
-  "apiKey": "cv_live_xxx",
-  "userIdentity": "operator@example.com",
   "videoUrl": "https://www.tiktok.com/@creator/video/123",
   "brief": "Evaluate hook, product integration, and conversion potential.",
   "waitForCompletion": true,
@@ -154,29 +161,11 @@ Submit by social video URL:
 }
 ```
 
-Or upload a media file first:
-
-```json
-{
-  "operation": "mediaUpload",
-  "apiKey": "cv_live_xxx",
-  "userIdentity": "operator@example.com",
-  "fileUrl": "https://example.com/video.mp4",
-  "filename": "video.mp4"
-}
-```
-
-Then pass the returned `oss_key` as `uploadedOssKey` to `videoAuditSubmit`.
-
-## Outreach
-
-Single send:
+### Outreach
 
 ```json
 {
   "operation": "outreachSend",
-  "apiKey": "cv_live_xxx",
-  "userIdentity": "operator@example.com",
   "to": "creator@example.com",
   "uid": "creator_uid_from_search",
   "platform": "tiktok",
@@ -185,45 +174,6 @@ Single send:
   "channel": "ses"
 }
 ```
-
-Batch send:
-
-```json
-{
-  "operation": "outreachSend",
-  "apiKey": "cv_live_xxx",
-  "userIdentity": "operator@example.com",
-  "recipients": [
-    { "email": "a@example.com", "uid": "uid_a", "nickname": "A", "platform": "tiktok" },
-    { "email": "b@example.com", "uid": "uid_b", "nickname": "B", "platform": "instagram" }
-  ],
-  "subject": "Collaboration opportunity",
-  "bodyHtml": "<p>Hi, we would like to discuss a campaign...</p>",
-  "channel": "ses",
-  "waitForCompletion": true
-}
-```
-
-## Raw Request
-
-Use raw requests when the backend adds a field before the actor UI has a named input.
-
-```json
-{
-  "operation": "rawRequest",
-  "apiKey": "cv_live_xxx",
-  "userIdentity": "operator@example.com",
-  "endpointPath": "/openapi/v1/creators/tiktok/search",
-  "requestBody": {
-    "page": 1,
-    "size": 50,
-    "country_code": "US",
-    "service_level": "S2"
-  }
-}
-```
-
-`requestBody` overrides generated fields. `rawBodyJson` overrides both generated fields and `requestBody`.
 
 ## Output
 

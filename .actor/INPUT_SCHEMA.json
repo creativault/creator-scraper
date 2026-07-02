@@ -1,13 +1,13 @@
 {
-  "title": "CreatiVault OpenAPI Actor",
-  "description": "Run CreatiVault OpenAPI operations from Apify: creator search, video search, lookalike, collection tasks, exports, video audit, outreach, uploads, and raw endpoint calls.",
+  "title": "CreatiVault Creator Search & Influencer Discovery",
+  "description": "Find creators and influencer leads across TikTok, Instagram, and YouTube. Pricing is pay-per-event: creator/video/lookalike results are charged per returned record, while audits, exports, uploads, and outreach emails are charged per successful action.",
   "type": "object",
   "schemaVersion": 1,
   "properties": {
     "operation": {
-      "title": "Operation",
+      "title": "What do you want to do?",
       "type": "string",
-      "description": "Choose the OpenAPI operation to run.",
+      "description": "Choose the workflow. Empty searches, failed requests, and status polling are not charged.",
       "editor": "select",
       "enum": [
         "creatorSearch",
@@ -18,7 +18,6 @@
         "collectionStatus",
         "collectionData",
         "collectionExport",
-        "fileDownloadUrl",
         "mediaUpload",
         "videoAuditSubmit",
         "videoAuditStatus",
@@ -27,120 +26,127 @@
         "outreachTask",
         "outreachContact",
         "outreachTodo",
-        "outreachMetrics",
-        "outreachConfig",
-        "outreachUpload",
-        "rawRequest"
+        "outreachMetrics"
       ],
       "enumTitles": [
-        "Creator search",
-        "Video search",
-        "Lookalike creators",
-        "Submit collection task",
-        "Submit keyword collection",
-        "Collection status",
-        "Collection data",
-        "Collection export",
-        "File download URL",
-        "Upload media",
-        "Submit video audit",
-        "Video audit status",
-        "Video audit result",
-        "Send outreach email",
-        "Outreach task status",
-        "Outreach contact",
-        "Outreach todo",
-        "Outreach metrics",
-        "Outreach config",
-        "Upload outreach attachment",
-        "Raw OpenAPI request"
+        "Creator search - S1 $1.20/1k, S2 $4/1k, S3 $8/1k",
+        "Video search - $1.50/1k videos",
+        "Lookalike creators - $6/1k creators",
+        "Submit collection task - $0.05/task",
+        "Submit keyword collection - $0.05/task",
+        "Check collection status - free",
+        "Fetch collection data - $2/1k records",
+        "Export collection data - $0.03/export",
+        "Upload media for audit - $0.08/upload",
+        "Submit video audit - $0.80/audit",
+        "Check video audit status - free",
+        "Get video audit result - free",
+        "Send outreach email - $0.04/email",
+        "Check outreach task - free",
+        "Check outreach contact - free",
+        "Outreach follow-up todo - free",
+        "Outreach metrics - free"
       ],
       "default": "creatorSearch"
-    },
-    "apiKey": {
-      "title": "CreatiVault API Key",
-      "type": "string",
-      "description": "Your CreatiVault OpenAPI key, for example cv_live_xxx.",
-      "editor": "textfield",
-      "isSecret": true
-    },
-    "userIdentity": {
-      "title": "User identity email",
-      "type": "string",
-      "description": "Value for X-User-Identity. Use the operator email address.",
-      "editor": "textfield"
-    },
-    "apiBaseUrl": {
-      "title": "API Base URL",
-      "type": "string",
-      "description": "CreatiVault OpenAPI base URL. Usually no change is needed.",
-      "editor": "textfield",
-      "default": "https://creativault-business.creativault.ai"
     },
     "platform": {
       "title": "Platform",
       "type": "string",
-      "description": "Platform for creator/video/collection operations.",
+      "description": "TikTok, YouTube, and Instagram are supported for search and most workflows. Twitter/X is supported only for collection link/username/keyword tasks.",
       "editor": "select",
       "enum": ["", "tiktok", "youtube", "instagram", "twitter"],
       "enumTitles": ["Not set", "TikTok", "YouTube", "Instagram", "Twitter/X"],
       "default": "tiktok"
     },
+    "serviceLevel": {
+      "title": "Creator data depth",
+      "type": "string",
+      "description": "Creator search pricing depends on data depth: S1 basic profile, S2 enriched profile/contact data, S3 deep audience profile.",
+      "editor": "select",
+      "enum": ["S1", "S2", "S3"],
+      "enumTitles": ["S1 basic - $1.20/1k creators", "S2 enriched - $4/1k creators", "S3 audience profile - $8/1k creators"],
+      "default": "S2"
+    },
+    "maxResults": {
+      "title": "Max billable records",
+      "type": "integer",
+      "description": "Maximum records to return and charge for in paged result workflows.",
+      "default": 100,
+      "minimum": 1,
+      "maximum": 100000
+    },
+    "size": {
+      "title": "Page size",
+      "type": "integer",
+      "description": "Creator/collection page size max 100. Video search is capped at 10 by the backend.",
+      "default": 50,
+      "minimum": 1,
+      "maximum": 100
+    },
+    "lang": {
+      "title": "Response language",
+      "type": "string",
+      "description": "Language for translated code values.",
+      "editor": "select",
+      "enum": ["en", "cn"],
+      "enumTitles": ["English", "Chinese"],
+      "default": "en"
+    },
     "keyword": {
       "title": "Keyword",
       "type": "string",
-      "description": "Creator search keyword or fallback video title keyword.",
+      "description": "Creator keyword, topic, niche, username, or video title keyword.",
       "editor": "textfield"
     },
     "countryCode": {
-      "title": "Country code",
+      "title": "Creator country code",
       "type": "string",
-      "description": "Country/region code, comma-separated for multiple values, for example US,CA.",
+      "description": "Creator country/region code, comma-separated for multiple values, for example US,CA.",
       "editor": "textfield",
       "default": "US"
     },
     "languageCode": {
-      "title": "Language code",
+      "title": "Creator language code",
       "type": "string",
       "description": "Creator content language code, comma-separated for multiple values, for example en,es.",
       "editor": "textfield"
     },
     "industry": {
-      "title": "Industry",
+      "title": "Industry or category",
       "type": "string",
-      "description": "Industry/category filter. Prefer backend-supported category IDs or names.",
+      "description": "Industry/category filter. Category names or supported IDs can be used.",
       "editor": "textfield"
     },
     "followersCntGte": {
-      "title": "Followers >=",
+      "title": "Minimum followers",
       "type": "integer",
       "description": "Minimum followers/subscribers.",
       "default": 10000,
       "minimum": 0
     },
     "followersCntLte": {
-      "title": "Followers <=",
+      "title": "Maximum followers",
       "type": "integer",
       "description": "Maximum followers/subscribers. Leave as 0 to omit.",
       "default": 0,
       "minimum": 0
     },
     "last10AvgVideoViewsGte": {
-      "title": "Avg views >=",
+      "title": "Minimum average views",
       "type": "number",
-      "description": "Minimum average views. Mapped to the correct platform field.",
+      "description": "Minimum average views. The actor maps this to the correct platform field.",
       "default": 0,
       "minimum": 0
     },
     "last10AvgVideoViewsLte": {
-      "title": "Avg views <=",
+      "title": "Maximum average views",
       "type": "number",
       "description": "Maximum average views. Leave as 0 to omit.",
       "default": 0,
       "minimum": 0
     },
     "last10AvgVideoInteractionRateGte": {
-      "title": "Interaction rate >= (%)",
+      "title": "Minimum interaction rate (%)",
       "type": "number",
       "description": "Minimum interaction rate as a 0-100 percentage.",
       "default": 0,
@@ -148,7 +154,7 @@
       "maximum": 100
     },
     "last10AvgVideoInteractionRateLte": {
-      "title": "Interaction rate <= (%)",
+      "title": "Maximum interaction rate (%)",
       "type": "number",
       "description": "Maximum interaction rate as a 0-100 percentage. Leave as 0 to omit.",
       "default": 0,
@@ -156,21 +162,21 @@
       "maximum": 100
     },
     "hasEmail": {
-      "title": "Has email",
+      "title": "Only creators with email",
       "type": "boolean",
-      "description": "Only return creators with public email contact when supported.",
+      "description": "Return only creators with public email contact when supported.",
+      "default": false
+    },
+    "hasWhatsapp": {
+      "title": "Only creators with WhatsApp",
+      "type": "boolean",
+      "description": "YouTube/Instagram filter.",
       "default": false
     },
     "hasMcn": {
       "title": "TikTok has MCN",
       "type": "boolean",
       "description": "TikTok only.",
-      "default": false
-    },
-    "hasWhatsapp": {
-      "title": "Has WhatsApp",
-      "type": "boolean",
-      "description": "YouTube/Instagram filter.",
       "default": false
     },
     "isProductKol": {
@@ -186,42 +192,42 @@
       "default": false
     },
     "gender": {
-      "title": "Gender",
+      "title": "Creator gender",
       "type": "string",
-      "description": "female/male or 0/1. The actor maps female to 0 and male to 1 for creator search.",
+      "description": "Optional creator gender filter.",
       "editor": "select",
-      "enum": ["", "female", "male", "0", "1"],
-      "enumTitles": ["Any", "Female", "Male", "0 female", "1 male"],
+      "enum": ["", "female", "male"],
+      "enumTitles": ["Any", "Female", "Male"],
       "default": ""
     },
     "audienceCountryCodeList": {
       "title": "Audience country codes",
       "type": "string",
-      "description": "Audience country code list, comma-separated.",
+      "description": "Audience country code list, comma-separated. Best used with S3.",
       "editor": "textfield"
     },
     "audienceLanguageCodeList": {
       "title": "Audience language codes",
       "type": "string",
-      "description": "Audience language code list, comma-separated.",
+      "description": "Audience language code list, comma-separated. Best used with S3.",
       "editor": "textfield"
     },
     "audienceFemaleRateGte": {
-      "title": "Female audience >= (%)",
+      "title": "Minimum female audience (%)",
       "type": "number",
-      "description": "Minimum female audience percentage.",
+      "description": "Minimum female audience percentage. Best used with S3.",
       "default": 0,
       "minimum": 0,
       "maximum": 100
     },
     "lastVideoPublishDateGte": {
-      "title": "Last publish from",
+      "title": "Last post from",
       "type": "string",
       "description": "YYYY-MM-DD.",
       "editor": "textfield"
     },
     "lastVideoPublishDateLte": {
-      "title": "Last publish to",
+      "title": "Last post to",
       "type": "string",
       "description": "YYYY-MM-DD.",
       "editor": "textfield"
@@ -229,61 +235,82 @@
     "sortField": {
       "title": "Sort field",
       "type": "string",
-      "description": "Optional sort field. If empty, the actor picks a platform-safe default.",
+      "description": "Optional. Leave empty to use a platform-safe default.",
       "editor": "textfield"
     },
     "sortOrder": {
       "title": "Sort order",
       "type": "string",
-      "description": "desc or asc.",
+      "description": "Sort direction.",
       "editor": "select",
       "enum": ["desc", "asc"],
       "enumTitles": ["Descending", "Ascending"],
       "default": "desc"
     },
-    "serviceLevel": {
-      "title": "Service level",
+    "hashtag": {
+      "title": "Video hashtags",
+      "type": "array",
+      "description": "Video search hashtags, max 3.",
+      "editor": "stringList",
+      "items": { "type": "string" }
+    },
+    "videoTitle": {
+      "title": "Video title keyword",
       "type": "string",
-      "description": "S1 basic list, S2 precision outreach, S3 deep audience profile.",
-      "editor": "select",
-      "enum": ["S1", "S2", "S3"],
-      "enumTitles": ["S1 basic", "S2 recommended", "S3 deep profile"],
-      "default": "S2"
+      "description": "Video title keyword for video search.",
+      "editor": "textfield"
     },
-    "lang": {
-      "title": "Response language",
-      "type": "string",
-      "description": "Language for translated code values.",
-      "editor": "select",
-      "enum": ["en", "cn"],
-      "enumTitles": ["English", "Chinese"],
-      "default": "en"
-    },
-    "maxResults": {
-      "title": "Max records",
+    "videoViewsCntGte": {
+      "title": "Minimum video views",
       "type": "integer",
-      "description": "Maximum records pushed to the Apify dataset for paged operations.",
-      "default": 100,
-      "minimum": 1,
-      "maximum": 100000
+      "description": "Minimum video views for video search.",
+      "minimum": 0
     },
-    "size": {
-      "title": "Page size",
-      "type": "integer",
-      "description": "Creator/collection page size max 100; video search max 10.",
-      "default": 50,
-      "minimum": 1,
+    "videoInteractionRateGte": {
+      "title": "Minimum video interaction rate (%)",
+      "type": "number",
+      "description": "Minimum video interaction rate as 0-100 percentage.",
+      "minimum": 0,
       "maximum": 100
     },
+    "username": {
+      "title": "Seed username",
+      "type": "string",
+      "description": "Lookalike seed username.",
+      "editor": "textfield"
+    },
+    "profileUrl": {
+      "title": "Seed profile URL",
+      "type": "string",
+      "description": "Lookalike seed creator profile URL.",
+      "editor": "textfield"
+    },
+    "targetPlatform": {
+      "title": "Lookalike target platform",
+      "type": "string",
+      "description": "Target platform for lookalike discovery.",
+      "editor": "select",
+      "enum": ["", "tiktok", "youtube", "instagram"],
+      "enumTitles": ["Same as seed", "TikTok", "YouTube", "Instagram"],
+      "default": ""
+    },
+    "limit": {
+      "title": "Lookalike limit",
+      "type": "integer",
+      "description": "Maximum similar creators to return.",
+      "default": 20,
+      "minimum": 1,
+      "maximum": 50
+    },
     "values": {
-      "title": "Values",
+      "title": "Collection values",
       "type": "array",
-      "description": "Collection links, usernames, creator profile URLs, or generic value list.",
+      "description": "Profile links, usernames, creator profile URLs, post URLs, or other collection values.",
       "editor": "stringList",
       "items": { "type": "string" }
     },
     "keywords": {
-      "title": "Keywords",
+      "title": "Collection keywords",
       "type": "array",
       "description": "Keyword collection terms, max 10.",
       "editor": "stringList",
@@ -292,22 +319,22 @@
     "taskType": {
       "title": "Collection task type",
       "type": "string",
-      "description": "Collection task type.",
+      "description": "Twitter/X supports only profile links and usernames.",
       "editor": "select",
       "enum": ["LINK_BATCH", "FILE_UPLOAD", "CREATOR_VIDEO", "POST_VIDEO"],
       "enumTitles": ["Profile links", "Usernames", "Creator videos", "Post videos"],
       "default": "LINK_BATCH"
     },
+    "taskName": {
+      "title": "Collection task name",
+      "type": "string",
+      "description": "Optional collection task name.",
+      "editor": "textfield"
+    },
     "taskId": {
       "title": "Task ID",
       "type": "string",
-      "description": "Collection, outreach, or video audit task ID.",
-      "editor": "textfield"
-    },
-    "taskName": {
-      "title": "Task name",
-      "type": "string",
-      "description": "Optional collection task name.",
+      "description": "Collection, outreach, or video audit task ID for status/data/export/result operations.",
       "editor": "textfield"
     },
     "webhookUrl": {
@@ -317,9 +344,9 @@
       "editor": "textfield"
     },
     "waitForCompletion": {
-      "title": "Wait for completion",
+      "title": "Wait for task completion",
       "type": "boolean",
-      "description": "For collection, video audit, and outreach submit operations, poll task status before finishing.",
+      "description": "For collection, video audit, and outreach submit operations, poll task status before finishing. Status polling itself is free.",
       "default": false
     },
     "pollIntervalSeconds": {
@@ -337,74 +364,19 @@
       "minimum": 1
     },
     "fetchData": {
-      "title": "Fetch collection data",
+      "title": "Fetch completed collection data",
       "type": "boolean",
-      "description": "After a completed collection task, fetch paginated data into the dataset.",
+      "description": "After a completed collection task, fetch paginated data into the dataset. Charged per returned record.",
       "default": false
     },
     "exportFormat": {
       "title": "Export format",
       "type": "string",
-      "description": "Collection export format. Set this with waitForCompletion to auto-export.",
+      "description": "Collection export format. Charged per successful export.",
       "editor": "select",
       "enum": ["", "xlsx", "csv", "html"],
       "enumTitles": ["Do not export", "Excel xlsx", "CSV", "HTML"],
       "default": ""
-    },
-    "username": {
-      "title": "Seed username",
-      "type": "string",
-      "description": "Lookalike seed username.",
-      "editor": "textfield"
-    },
-    "profileUrl": {
-      "title": "Seed profile URL",
-      "type": "string",
-      "description": "Lookalike seed creator profile URL.",
-      "editor": "textfield"
-    },
-    "targetPlatform": {
-      "title": "Target platform",
-      "type": "string",
-      "description": "Lookalike target platform.",
-      "editor": "select",
-      "enum": ["", "tiktok", "youtube", "instagram"],
-      "enumTitles": ["Same as seed", "TikTok", "YouTube", "Instagram"],
-      "default": ""
-    },
-    "limit": {
-      "title": "Limit",
-      "type": "integer",
-      "description": "Lookalike result limit.",
-      "default": 20,
-      "minimum": 1,
-      "maximum": 50
-    },
-    "hashtag": {
-      "title": "Video hashtags",
-      "type": "array",
-      "description": "Video search hashtags, max 3.",
-      "editor": "stringList",
-      "items": { "type": "string" }
-    },
-    "videoTitle": {
-      "title": "Video title keyword",
-      "type": "string",
-      "description": "Video title keyword for video search.",
-      "editor": "textfield"
-    },
-    "videoViewsCntGte": {
-      "title": "Video views >=",
-      "type": "integer",
-      "description": "Minimum video views for video search.",
-      "minimum": 0
-    },
-    "videoInteractionRateGte": {
-      "title": "Video interaction >= (%)",
-      "type": "number",
-      "description": "Minimum video interaction rate as 0-100 percentage.",
-      "minimum": 0,
-      "maximum": 100
     },
     "videoUrl": {
       "title": "Video URL",
@@ -415,7 +387,7 @@
     "uploadedOssKey": {
       "title": "Uploaded OSS key",
       "type": "string",
-      "description": "OSS key returned by mediaUpload for video audit.",
+      "description": "OSS key returned by media upload for video audit.",
       "editor": "textfield"
     },
     "brief": {
@@ -434,7 +406,7 @@
       "default": "high"
     },
     "enableBenchmark": {
-      "title": "Enable benchmark",
+      "title": "Enable benchmark comparison",
       "type": "boolean",
       "description": "Compare video audit against benchmark library.",
       "default": false
@@ -442,7 +414,7 @@
     "fileUrl": {
       "title": "File URL",
       "type": "string",
-      "description": "Public URL for mediaUpload or outreachUpload.",
+      "description": "Public URL for media upload or outreach attachment upload.",
       "editor": "textfield"
     },
     "filename": {
@@ -452,7 +424,7 @@
       "editor": "textfield"
     },
     "to": {
-      "title": "Outreach email",
+      "title": "Outreach recipient email",
       "type": "string",
       "description": "Single outreach recipient email.",
       "editor": "textfield"
@@ -460,7 +432,7 @@
     "uid": {
       "title": "Creator UID",
       "type": "string",
-      "description": "Creator UID from search results, required for single outreach send.",
+      "description": "Creator UID from search results. Required for single outreach send.",
       "editor": "textfield"
     },
     "nickname": {
@@ -470,9 +442,9 @@
       "editor": "textfield"
     },
     "recipients": {
-      "title": "Outreach recipients",
+      "title": "Batch outreach recipients",
       "type": "array",
-      "description": "Batch outreach recipients. Each item should include email and uid.",
+      "description": "Batch outreach recipients. Each item should include email and uid. Charged per accepted email.",
       "editor": "json",
       "items": { "type": "object" }
     },
@@ -503,40 +475,10 @@
       "enumTitles": ["SES", "Gmail", "Outlook"],
       "default": "ses"
     },
-    "deliveryType": {
-      "title": "Delivery type",
-      "type": "string",
-      "description": "Delivery type for fileDownloadUrl.",
-      "editor": "textfield"
-    },
-    "deliveryParams": {
-      "title": "Delivery params",
-      "type": "object",
-      "description": "Strategy-specific params for fileDownloadUrl.",
-      "editor": "json"
-    },
-    "endpointPath": {
-      "title": "Raw endpoint path",
-      "type": "string",
-      "description": "Raw endpoint path, for example /openapi/v1/creators/tiktok/search.",
-      "editor": "textfield"
-    },
-    "requestBody": {
-      "title": "Advanced request body",
-      "type": "object",
-      "description": "JSON body merged into the generated request body. Values here override mapped fields.",
-      "editor": "json"
-    },
-    "rawBodyJson": {
-      "title": "Raw body JSON string",
-      "type": "string",
-      "description": "Optional JSON string merged after requestBody. Useful when Apify UI cannot express a nested shape.",
-      "editor": "textarea"
-    },
     "maxRetries": {
       "title": "Max retries",
       "type": "integer",
-      "description": "Retries for 429 and 5xx responses.",
+      "description": "Retries for temporary rate-limit and server errors.",
       "default": 3,
       "minimum": 1,
       "maximum": 10
@@ -548,5 +490,5 @@
       "editor": "proxy"
     }
   },
-  "required": ["apiKey", "userIdentity", "operation"]
+  "required": ["operation"]
 }
