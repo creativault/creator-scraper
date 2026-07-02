@@ -1,7 +1,7 @@
 {
   "actorSpecification": 1,
   "name": "creativault-collection-export",
-  "title": "CreatiVault Creator Collection & Export",
+  "title": "Influencer Collection & Export",
   "description": "Submit creator collection jobs by profile links, usernames, keywords, creator videos, or post videos, then fetch data or export xlsx/csv/html files.",
   "version": "1.0",
   "buildTag": "latest",

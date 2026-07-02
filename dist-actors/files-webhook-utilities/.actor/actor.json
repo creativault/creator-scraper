@@ -1,7 +1,7 @@
 {
   "actorSpecification": 1,
   "name": "creativault-files-webhook-utilities",
-  "title": "CreatiVault Files & Webhook Utilities",
+  "title": "File & Webhook Utilities",
   "description": "Utility actor for file delivery URL lookup and webhook connectivity verification.",
   "version": "1.0",
   "buildTag": "latest",

@@ -1,7 +1,7 @@
 {
   "actorSpecification": 1,
   "name": "creativault-lookalike-finder",
-  "title": "CreatiVault Lookalike Creator Finder",
+  "title": "Lookalike Influencer Finder",
   "description": "Find similar creators from a seed username or profile URL across TikTok, Instagram, and YouTube.",
   "version": "1.0",
   "buildTag": "latest",

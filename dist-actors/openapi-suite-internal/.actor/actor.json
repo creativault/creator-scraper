@@ -1,7 +1,7 @@
 {
   "actorSpecification": 1,
   "name": "creativault-openapi-suite-internal",
-  "title": "CreatiVault OpenAPI Suite Internal",
+  "title": "OpenAPI Suite Internal",
   "description": "Internal all-in-one actor covering every CreatiVault OpenAPI operation, including debug/raw operations when enabled by environment variables.",
   "version": "1.0",
   "buildTag": "latest",

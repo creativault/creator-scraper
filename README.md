@@ -25,8 +25,10 @@ Configure these in Apify Console as Actor environment variables or secrets:
 ```text
 CV_API_KEY=your_creativault_openapi_key
 CV_USER_IDENTITY=apify-store@creativault.ai
-CV_API_BASE_URL=https://creativault-business.creativault.ai
+CV_API_BASE_URL=your_creativault_openapi_base_url
 ```
+
+`CV_API_KEY` must be configured as a secret. `CV_API_BASE_URL` is also required and should be configured as an environment variable instead of being hard-coded in source files.
 
 Optional internal/debug variables:
 

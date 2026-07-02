@@ -1,7 +1,7 @@
 {
   "actorSpecification": 1,
   "name": "creativault-video-search",
-  "title": "CreatiVault Video Search",
+  "title": "Short Video Scraper",
   "description": "Search short-form videos across TikTok, Instagram, and YouTube by hashtag, title, views, interaction rate, and publish date.",
   "version": "1.0",
   "buildTag": "latest",

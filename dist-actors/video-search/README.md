@@ -1,4 +1,4 @@
-# CreatiVault Video Search
+# Short Video Scraper
 
 Search short-form videos across TikTok, Instagram, and YouTube by hashtag, title, views, interaction rate, and publish date.
 
@@ -13,10 +13,10 @@ Configure these as Apify Actor environment variables/secrets:
 ```text
 CV_API_KEY=your_creativault_openapi_key
 CV_USER_IDENTITY=apify-store@creativault.ai
-CV_API_BASE_URL=https://creativault-business.creativault.ai
+CV_API_BASE_URL=your_creativault_openapi_base_url
 ```
 
-`CV_API_KEY` must be secret.
+`CV_API_KEY` must be secret. `CV_API_BASE_URL` is required and should be configured as an environment variable instead of being hard-coded in source files.
 
 ## Operation
 

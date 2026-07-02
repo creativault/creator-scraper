@@ -1,7 +1,7 @@
 {
   "actorSpecification": 1,
   "name": "creativault-outreach-email",
-  "title": "CreatiVault Outreach Email",
+  "title": "Influencer Outreach Email",
   "description": "Send creator outreach emails, check task status, inspect contact history, todo follow-ups, metrics, config, and upload attachments.",
   "version": "1.0",
   "buildTag": "latest",

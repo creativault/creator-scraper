@@ -7,7 +7,7 @@ const outRoot = join(root, 'dist-actors');
 const commonRequiredEnv = [
     'CV_API_KEY=your_creativault_openapi_key',
     'CV_USER_IDENTITY=apify-store@creativault.ai',
-    'CV_API_BASE_URL=https://creativault-business.creativault.ai',
+    'CV_API_BASE_URL=your_creativault_openapi_base_url',
 ];
 
 const commonProps = {
@@ -136,7 +136,7 @@ const actors = [
     {
         slug: 'creator-search',
         name: 'creativault-creator-search',
-        title: 'CreatiVault Creator Search',
+        title: 'Influencer Scraper',
         defaultOperation: 'creatorSearch',
         description: 'Search TikTok, Instagram, YouTube, and Twitter/X creators with follower, country, engagement, email, industry, and audience filters.',
         pricing: 'S1 $1.20/1k creators, S2 $4/1k creators, S3 $8/1k creators.',
@@ -152,7 +152,7 @@ const actors = [
     {
         slug: 'lookalike-finder',
         name: 'creativault-lookalike-finder',
-        title: 'CreatiVault Lookalike Creator Finder',
+        title: 'Lookalike Influencer Finder',
         defaultOperation: 'lookalike',
         description: 'Find similar creators from a seed username or profile URL across TikTok, Instagram, and YouTube.',
         pricing: '$6.00 / 1,000 similar creators.',
@@ -175,7 +175,7 @@ const actors = [
     {
         slug: 'video-search',
         name: 'creativault-video-search',
-        title: 'CreatiVault Video Search',
+        title: 'Short Video Scraper',
         defaultOperation: 'videoSearch',
         description: 'Search short-form videos across TikTok, Instagram, and YouTube by hashtag, title, views, interaction rate, and publish date.',
         pricing: '$1.50 / 1,000 videos.',
@@ -197,7 +197,7 @@ const actors = [
     {
         slug: 'collection-export',
         name: 'creativault-collection-export',
-        title: 'CreatiVault Creator Collection & Export',
+        title: 'Influencer Collection & Export',
         defaultOperation: 'collectionSubmit',
         description: 'Submit creator collection jobs by profile links, usernames, keywords, creator videos, or post videos, then fetch data or export xlsx/csv/html files.',
         pricing: '$0.05/task, $0.03/export, $2/1k fetched records.',
@@ -224,7 +224,7 @@ const actors = [
     {
         slug: 'video-audit',
         name: 'creativault-video-audit',
-        title: 'CreatiVault Video Audit',
+        title: 'Video Audit',
         defaultOperation: 'videoAuditSubmit',
         description: 'Submit TikTok, Instagram Reels, or YouTube Shorts for hook, script, storyboard, benchmark, and viral-factor analysis.',
         pricing: '$0.80/audit and $0.08/media upload.',
@@ -248,7 +248,7 @@ const actors = [
     {
         slug: 'outreach-email',
         name: 'creativault-outreach-email',
-        title: 'CreatiVault Outreach Email',
+        title: 'Influencer Outreach Email',
         defaultOperation: 'outreachSend',
         description: 'Send creator outreach emails, check task status, inspect contact history, todo follow-ups, metrics, config, and upload attachments.',
         pricing: '$0.04/email and $0.08/attachment upload.',
@@ -277,7 +277,7 @@ const actors = [
     {
         slug: 'files-webhook-utilities',
         name: 'creativault-files-webhook-utilities',
-        title: 'CreatiVault Files & Webhook Utilities',
+        title: 'File & Webhook Utilities',
         defaultOperation: 'fileDownloadUrl',
         description: 'Utility actor for file delivery URL lookup and webhook connectivity verification.',
         pricing: 'File download URL and webhook verification are free utility operations unless future pricing is configured.',
@@ -293,7 +293,7 @@ const actors = [
     {
         slug: 'openapi-suite-internal',
         name: 'creativault-openapi-suite-internal',
-        title: 'CreatiVault OpenAPI Suite Internal',
+        title: 'OpenAPI Suite Internal',
         defaultOperation: 'creatorSearch',
         description: 'Internal all-in-one actor covering every CreatiVault OpenAPI operation, including debug/raw operations when enabled by environment variables.',
         pricing: 'Internal suite. Use public single-purpose actors for Store listings.',
@@ -390,7 +390,7 @@ Configure these as Apify Actor environment variables/secrets:
 ${commonRequiredEnv.join('\n')}
 \`\`\`
 
-\`CV_API_KEY\` must be secret.
+\`CV_API_KEY\` must be secret. \`CV_API_BASE_URL\` is required and should be configured as an environment variable instead of being hard-coded in source files.
 
 ## Operation
 

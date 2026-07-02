@@ -1,5 +1,5 @@
 {
-  "title": "CreatiVault Files & Webhook Utilities",
+  "title": "File & Webhook Utilities",
   "description": "Utility actor for file delivery URL lookup and webhook connectivity verification. Pricing: File download URL and webhook verification are free utility operations unless future pricing is configured.",
   "type": "object",
   "schemaVersion": 1,

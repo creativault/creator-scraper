@@ -2,7 +2,6 @@ import { Actor, log } from 'apify';
 
 await Actor.init();
 
-const DEFAULT_BASE_URL = 'https://creativault-business.creativault.ai';
 const MAX_SEARCH_PAGES = 200;
 const TERMINAL_STATUSES = new Set(['completed', 'failed', 'timeout']);
 const CHARGE_EVENTS = {
@@ -578,7 +577,7 @@ async function pollOutreachTask(taskId, input, client) {
 
 function createClient(input, auth) {
     const allowInputBaseUrl = process.env.CV_ALLOW_INPUT_BASE_URL === 'true' || Boolean(clean(input.apiKey));
-    const baseUrl = ((allowInputBaseUrl ? input.apiBaseUrl : null) || process.env.CV_API_BASE_URL || DEFAULT_BASE_URL).replace(/\/+$/, '');
+    const baseUrl = resolveBaseUrl(input, allowInputBaseUrl);
     const headers = {
         'X-API-Key': auth.apiKey,
         'X-User-Identity': auth.userIdentity,
@@ -593,6 +592,14 @@ function createClient(input, auth) {
             return requestForm(baseUrl + normalizeEndpoint(endpoint), form, headers, input.maxRetries);
         },
     };
+}
+
+function resolveBaseUrl(input, allowInputBaseUrl) {
+    const baseUrl = clean((allowInputBaseUrl ? input.apiBaseUrl : null) || process.env.CV_API_BASE_URL);
+    if (!baseUrl) {
+        throw new Error('CV_API_BASE_URL environment variable is required.');
+    }
+    return baseUrl.replace(/\/+$/, '');
 }
 
 async function requestJson(url, body, headers, maxRetries = 3) {

@@ -1,7 +1,7 @@
 {
   "actorSpecification": 1,
   "name": "creativault-creator-search",
-  "title": "CreatiVault Creator Search",
+  "title": "Influencer Scraper",
   "description": "Search TikTok, Instagram, YouTube, and Twitter/X creators with follower, country, engagement, email, industry, and audience filters.",
   "version": "1.0",
   "buildTag": "latest",
