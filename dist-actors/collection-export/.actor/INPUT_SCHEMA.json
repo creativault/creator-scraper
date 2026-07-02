@@ -1,0 +1,177 @@
+{
+  "title": "CreatiVault Creator Collection & Export",
+  "description": "Submit creator collection jobs by profile links, usernames, keywords, creator videos, or post videos, then fetch data or export xlsx/csv/html files. Pricing: $0.05/task, $0.03/export, $2/1k fetched records.",
+  "type": "object",
+  "schemaVersion": 1,
+  "properties": {
+    "operation": {
+      "title": "What do you want to do?",
+      "type": "string",
+      "description": "Choose the workflow. Failed requests and status polling are not charged.",
+      "editor": "select",
+      "enum": [
+        "collectionSubmit",
+        "keywordCollectionSubmit",
+        "collectionStatus",
+        "collectionData",
+        "collectionExport"
+      ],
+      "enumTitles": [
+        "Submit link/username/video collection - $0.05/task",
+        "Submit keyword collection - $0.05/task",
+        "Check task status - free",
+        "Fetch task data - $2/1k records",
+        "Export task data - $0.03/export"
+      ],
+      "default": "collectionSubmit"
+    },
+    "platform": {
+      "title": "Platform",
+      "type": "string",
+      "description": "Social platform.",
+      "editor": "select",
+      "enum": [
+        "",
+        "tiktok",
+        "youtube",
+        "instagram",
+        "twitter"
+      ],
+      "enumTitles": [
+        "Not set",
+        "TikTok",
+        "YouTube",
+        "Instagram",
+        "Twitter/X"
+      ],
+      "default": "tiktok"
+    },
+    "taskType": {
+      "title": "Collection task type",
+      "type": "string",
+      "description": "Twitter/X supports only profile links and usernames.",
+      "editor": "select",
+      "enum": [
+        "LINK_BATCH",
+        "FILE_UPLOAD",
+        "CREATOR_VIDEO",
+        "POST_VIDEO"
+      ],
+      "enumTitles": [
+        "Profile links",
+        "Usernames",
+        "Creator videos",
+        "Post videos"
+      ],
+      "default": "LINK_BATCH"
+    },
+    "values": {
+      "title": "Collection values",
+      "type": "array",
+      "description": "Profile links, usernames, creator profile URLs, or post URLs.",
+      "editor": "stringList",
+      "items": {
+        "type": "string"
+      }
+    },
+    "keywords": {
+      "title": "Keyword collection terms",
+      "type": "array",
+      "description": "Keyword collection terms, max 10.",
+      "editor": "stringList",
+      "items": {
+        "type": "string"
+      }
+    },
+    "taskName": {
+      "title": "Task name",
+      "type": "string",
+      "description": "Optional collection task name.",
+      "editor": "textfield"
+    },
+    "taskId": {
+      "title": "Task ID",
+      "type": "string",
+      "description": "Task ID for status, data, export, or result operations.",
+      "editor": "textfield"
+    },
+    "webhookUrl": {
+      "title": "Webhook URL",
+      "type": "string",
+      "description": "Optional HTTPS callback URL for collection completion.",
+      "editor": "textfield"
+    },
+    "waitForCompletion": {
+      "title": "Wait for task completion",
+      "type": "boolean",
+      "description": "Poll task status before finishing. Status polling itself is free.",
+      "default": false
+    },
+    "pollIntervalSeconds": {
+      "title": "Poll interval seconds",
+      "type": "integer",
+      "description": "Polling interval for async tasks.",
+      "default": 60,
+      "minimum": 1
+    },
+    "maxPollAttempts": {
+      "title": "Max poll attempts",
+      "type": "integer",
+      "description": "Maximum polling attempts before timing out.",
+      "default": 45,
+      "minimum": 1
+    },
+    "fetchData": {
+      "title": "Fetch completed collection data",
+      "type": "boolean",
+      "description": "Charged per returned record.",
+      "default": false
+    },
+    "exportFormat": {
+      "title": "Export format",
+      "type": "string",
+      "description": "Charged per successful export.",
+      "editor": "select",
+      "enum": [
+        "",
+        "xlsx",
+        "csv",
+        "html"
+      ],
+      "enumTitles": [
+        "Do not export",
+        "Excel xlsx",
+        "CSV",
+        "HTML"
+      ],
+      "default": ""
+    },
+    "maxResults": {
+      "title": "Max billable records",
+      "type": "integer",
+      "description": "Maximum records to return and charge for.",
+      "default": 100,
+      "minimum": 1,
+      "maximum": 100000
+    },
+    "size": {
+      "title": "Page size",
+      "type": "integer",
+      "description": "Creator/collection page size max 100. Video search is capped at 10.",
+      "default": 50,
+      "minimum": 1,
+      "maximum": 100
+    },
+    "maxRetries": {
+      "title": "Max retries",
+      "type": "integer",
+      "description": "Retries for temporary rate-limit and server errors.",
+      "default": 3,
+      "minimum": 1,
+      "maximum": 10
+    }
+  },
+  "required": [
+    "operation"
+  ]
+}

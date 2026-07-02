@@ -6,7 +6,7 @@ The public Store version does not ask users for a CreatiVault API key. The Actor
 
 ## Capabilities
 
-- Creator search: TikTok, YouTube, Instagram
+- Creator search: TikTok, YouTube, Instagram, Twitter/X
 - Video search: cross-platform short-video discovery
 - Lookalike creator discovery
 - Collection tasks: link, username, creator-video, post-video, keyword collection
@@ -33,6 +33,7 @@ Optional internal/debug variables:
 ```text
 CV_DISABLE_APIFY_CHARGING=true
 CV_ALLOW_INPUT_BASE_URL=true
+CV_ENABLE_RAW_REQUEST=true
 ```
 
 Do not expose `CV_API_KEY` or `CV_ALLOW_INPUT_BASE_URL` in the public input schema.
@@ -54,6 +55,7 @@ Create these custom PPE events in Apify Console under Publication -> Monetizatio
 | `video-audit-submit` | `$0.8000` |
 | `media-upload` | `$0.0800` |
 | `outreach-email` | `$0.0400` |
+| `outreach-attachment-upload` | `$0.0800` |
 
 Recommended: remove or set `apify-default-dataset-item` to zero/disabled. This actor uses custom events because `S1`, `S2`, `S3`, video search, audits, and outreach have different values and costs.
 
@@ -196,3 +198,4 @@ A run summary is also written to the key-value store as `OUTPUT`.
 - Do not treat `meta.quota_remaining` as credits. Only OpenAPI error code `40201` means insufficient credits.
 - Search responses may return `meta.total: null` when the backend intentionally skips count queries.
 - The backend stringifies many search data fields. The actor restores common numeric and boolean fields in dataset output.
+- Public Store listings should use the generated split actors in `dist-actors/`. See `docs/split-actors.md`.

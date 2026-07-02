@@ -1,0 +1,253 @@
+{
+  "title": "CreatiVault Creator Search",
+  "description": "Search TikTok, Instagram, YouTube, and Twitter/X creators with follower, country, engagement, email, industry, and audience filters. Pricing: S1 $1.20/1k creators, S2 $4/1k creators, S3 $8/1k creators.",
+  "type": "object",
+  "schemaVersion": 1,
+  "properties": {
+    "platform": {
+      "title": "Platform",
+      "type": "string",
+      "description": "Social platform.",
+      "editor": "select",
+      "enum": [
+        "tiktok",
+        "youtube",
+        "instagram",
+        "twitter"
+      ],
+      "enumTitles": [
+        "TikTok",
+        "YouTube",
+        "Instagram",
+        "Twitter/X"
+      ],
+      "default": "tiktok"
+    },
+    "serviceLevel": {
+      "title": "Creator data depth",
+      "type": "string",
+      "description": "S1 basic profile, S2 enriched profile/contact data, S3 deep audience profile.",
+      "editor": "select",
+      "enum": [
+        "S1",
+        "S2",
+        "S3"
+      ],
+      "enumTitles": [
+        "S1 basic - $1.20/1k creators",
+        "S2 enriched - $4/1k creators",
+        "S3 audience profile - $8/1k creators"
+      ],
+      "default": "S2"
+    },
+    "keyword": {
+      "title": "Keyword",
+      "type": "string",
+      "description": "Creator keyword, topic, niche, or username.",
+      "editor": "textfield"
+    },
+    "countryCode": {
+      "title": "Creator country code",
+      "type": "string",
+      "description": "Comma-separated country codes, for example US,CA.",
+      "editor": "textfield",
+      "default": "US"
+    },
+    "languageCode": {
+      "title": "Creator language code",
+      "type": "string",
+      "description": "Comma-separated creator content language codes, for example en,es.",
+      "editor": "textfield"
+    },
+    "industry": {
+      "title": "Industry or category",
+      "type": "string",
+      "description": "Industry/category filter. Category names or supported IDs can be used.",
+      "editor": "textfield"
+    },
+    "followersCntGte": {
+      "title": "Minimum followers",
+      "type": "integer",
+      "description": "Minimum followers/subscribers.",
+      "default": 10000,
+      "minimum": 0
+    },
+    "followersCntLte": {
+      "title": "Maximum followers",
+      "type": "integer",
+      "description": "Maximum followers/subscribers. Leave as 0 to omit.",
+      "default": 0,
+      "minimum": 0
+    },
+    "last10AvgVideoViewsGte": {
+      "title": "Minimum average views",
+      "type": "number",
+      "description": "Minimum average views.",
+      "default": 0,
+      "minimum": 0
+    },
+    "last10AvgVideoViewsLte": {
+      "title": "Maximum average views",
+      "type": "number",
+      "description": "Maximum average views. Leave as 0 to omit.",
+      "default": 0,
+      "minimum": 0
+    },
+    "last10AvgVideoInteractionRateGte": {
+      "title": "Minimum interaction rate (%)",
+      "type": "number",
+      "description": "0-100 percentage.",
+      "default": 0,
+      "minimum": 0,
+      "maximum": 100
+    },
+    "last10AvgVideoInteractionRateLte": {
+      "title": "Maximum interaction rate (%)",
+      "type": "number",
+      "description": "0-100 percentage. Leave as 0 to omit.",
+      "default": 0,
+      "minimum": 0,
+      "maximum": 100
+    },
+    "hasEmail": {
+      "title": "Only creators with email",
+      "type": "boolean",
+      "description": "Return only creators with public email contact when supported.",
+      "default": false
+    },
+    "hasWhatsapp": {
+      "title": "Only creators with WhatsApp",
+      "type": "boolean",
+      "description": "YouTube/Instagram filter.",
+      "default": false
+    },
+    "hasMcn": {
+      "title": "TikTok has MCN",
+      "type": "boolean",
+      "description": "TikTok only.",
+      "default": false
+    },
+    "isProductKol": {
+      "title": "Instagram product KOL",
+      "type": "boolean",
+      "description": "Instagram only.",
+      "default": false
+    },
+    "isAiCreator": {
+      "title": "AI creator",
+      "type": "boolean",
+      "description": "YouTube/Instagram filter when supported.",
+      "default": false
+    },
+    "gender": {
+      "title": "Creator gender",
+      "type": "string",
+      "description": "Optional creator gender filter.",
+      "editor": "select",
+      "enum": [
+        "",
+        "female",
+        "male"
+      ],
+      "enumTitles": [
+        "Any",
+        "Female",
+        "Male"
+      ],
+      "default": ""
+    },
+    "audienceCountryCodeList": {
+      "title": "Audience country codes",
+      "type": "string",
+      "description": "Comma-separated. Best used with S3.",
+      "editor": "textfield"
+    },
+    "audienceLanguageCodeList": {
+      "title": "Audience language codes",
+      "type": "string",
+      "description": "Comma-separated. Best used with S3.",
+      "editor": "textfield"
+    },
+    "audienceFemaleRateGte": {
+      "title": "Minimum female audience (%)",
+      "type": "number",
+      "description": "Best used with S3.",
+      "default": 0,
+      "minimum": 0,
+      "maximum": 100
+    },
+    "lastVideoPublishDateGte": {
+      "title": "Last post from",
+      "type": "string",
+      "description": "YYYY-MM-DD.",
+      "editor": "textfield"
+    },
+    "lastVideoPublishDateLte": {
+      "title": "Last post to",
+      "type": "string",
+      "description": "YYYY-MM-DD.",
+      "editor": "textfield"
+    },
+    "sortField": {
+      "title": "Sort field",
+      "type": "string",
+      "description": "Optional. Leave empty to use a platform-safe default.",
+      "editor": "textfield"
+    },
+    "sortOrder": {
+      "title": "Sort order",
+      "type": "string",
+      "description": "Sort direction.",
+      "editor": "select",
+      "enum": [
+        "desc",
+        "asc"
+      ],
+      "enumTitles": [
+        "Descending",
+        "Ascending"
+      ],
+      "default": "desc"
+    },
+    "maxResults": {
+      "title": "Max billable records",
+      "type": "integer",
+      "description": "Maximum records to return and charge for.",
+      "default": 100,
+      "minimum": 1,
+      "maximum": 100000
+    },
+    "size": {
+      "title": "Page size",
+      "type": "integer",
+      "description": "Creator/collection page size max 100. Video search is capped at 10.",
+      "default": 50,
+      "minimum": 1,
+      "maximum": 100
+    },
+    "lang": {
+      "title": "Response language",
+      "type": "string",
+      "description": "Language for translated code values.",
+      "editor": "select",
+      "enum": [
+        "en",
+        "cn"
+      ],
+      "enumTitles": [
+        "English",
+        "Chinese"
+      ],
+      "default": "en"
+    },
+    "maxRetries": {
+      "title": "Max retries",
+      "type": "integer",
+      "description": "Retries for temporary rate-limit and server errors.",
+      "default": 3,
+      "minimum": 1,
+      "maximum": 10
+    }
+  },
+  "required": []
+}

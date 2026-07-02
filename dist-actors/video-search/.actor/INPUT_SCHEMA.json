@@ -1,0 +1,105 @@
+{
+  "title": "CreatiVault Video Search",
+  "description": "Search short-form videos across TikTok, Instagram, and YouTube by hashtag, title, views, interaction rate, and publish date. Pricing: $1.50 / 1,000 videos.",
+  "type": "object",
+  "schemaVersion": 1,
+  "properties": {
+    "platform": {
+      "title": "Platform",
+      "type": "string",
+      "description": "Social platform.",
+      "editor": "select",
+      "enum": [
+        "",
+        "tiktok",
+        "youtube",
+        "instagram"
+      ],
+      "enumTitles": [
+        "All supported",
+        "TikTok",
+        "YouTube",
+        "Instagram"
+      ],
+      "default": ""
+    },
+    "hashtag": {
+      "title": "Hashtags",
+      "type": "array",
+      "description": "Video hashtags, max 3.",
+      "editor": "stringList",
+      "items": {
+        "type": "string"
+      }
+    },
+    "videoTitle": {
+      "title": "Video title keyword",
+      "type": "string",
+      "description": "Video title keyword.",
+      "editor": "textfield"
+    },
+    "videoViewsCntGte": {
+      "title": "Minimum video views",
+      "type": "integer",
+      "description": "Minimum video views.",
+      "minimum": 0
+    },
+    "videoViewsCntLte": {
+      "title": "Maximum video views",
+      "type": "integer",
+      "description": "Maximum video views.",
+      "minimum": 0
+    },
+    "videoInteractionRateGte": {
+      "title": "Minimum interaction rate (%)",
+      "type": "number",
+      "description": "0-100 percentage.",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "videoInteractionRateLte": {
+      "title": "Maximum interaction rate (%)",
+      "type": "number",
+      "description": "0-100 percentage.",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "videoPublishDateGte": {
+      "title": "Publish date from",
+      "type": "string",
+      "description": "YYYY-MM-DD. Defaults to the last 15 days if both dates are omitted.",
+      "editor": "textfield"
+    },
+    "videoPublishDateLte": {
+      "title": "Publish date to",
+      "type": "string",
+      "description": "YYYY-MM-DD.",
+      "editor": "textfield"
+    },
+    "maxResults": {
+      "title": "Max billable records",
+      "type": "integer",
+      "description": "Maximum records to return and charge for.",
+      "default": 30,
+      "minimum": 1,
+      "maximum": 100
+    },
+    "size": {
+      "title": "Page size",
+      "type": "integer",
+      "description": "Creator/collection page size max 100. Video search is capped at 10.",
+      "default": 10,
+      "minimum": 1,
+      "maximum": 10
+    },
+    "maxRetries": {
+      "title": "Max retries",
+      "type": "integer",
+      "description": "Retries for temporary rate-limit and server errors.",
+      "default": 3,
+      "minimum": 1,
+      "maximum": 10
+    }
+  },
+  "required": []
+}

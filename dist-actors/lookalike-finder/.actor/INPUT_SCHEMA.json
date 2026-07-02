@@ -1,0 +1,131 @@
+{
+  "title": "CreatiVault Lookalike Creator Finder",
+  "description": "Find similar creators from a seed username or profile URL across TikTok, Instagram, and YouTube. Pricing: $6.00 / 1,000 similar creators.",
+  "type": "object",
+  "schemaVersion": 1,
+  "properties": {
+    "profileUrl": {
+      "title": "Seed profile URL",
+      "type": "string",
+      "description": "Creator profile URL. If provided, platform and username are resolved automatically.",
+      "editor": "textfield"
+    },
+    "username": {
+      "title": "Seed username",
+      "type": "string",
+      "description": "Seed creator username when no profile URL is provided.",
+      "editor": "textfield"
+    },
+    "platform": {
+      "title": "Platform",
+      "type": "string",
+      "description": "Social platform.",
+      "editor": "select",
+      "enum": [
+        "",
+        "tiktok",
+        "youtube",
+        "instagram"
+      ],
+      "enumTitles": [
+        "Auto / not set",
+        "TikTok",
+        "YouTube",
+        "Instagram"
+      ],
+      "default": ""
+    },
+    "targetPlatform": {
+      "title": "Target platform",
+      "type": "string",
+      "description": "Target platform for lookalike results.",
+      "editor": "select",
+      "enum": [
+        "",
+        "tiktok",
+        "youtube",
+        "instagram"
+      ],
+      "enumTitles": [
+        "Same as seed",
+        "TikTok",
+        "YouTube",
+        "Instagram"
+      ],
+      "default": ""
+    },
+    "countryCode": {
+      "title": "Target country code",
+      "type": "string",
+      "description": "Optional target region/country code.",
+      "editor": "textfield"
+    },
+    "languageCode": {
+      "title": "Target language code",
+      "type": "string",
+      "description": "Optional target language code.",
+      "editor": "textfield"
+    },
+    "followersCntGte": {
+      "title": "Minimum followers",
+      "type": "integer",
+      "description": "Minimum followers/subscribers.",
+      "default": 10000,
+      "minimum": 0
+    },
+    "followersCntLte": {
+      "title": "Maximum followers",
+      "type": "integer",
+      "description": "Maximum followers/subscribers. Leave as 0 to omit.",
+      "default": 0,
+      "minimum": 0
+    },
+    "last10AvgVideoViewsGte": {
+      "title": "Minimum average views",
+      "type": "number",
+      "description": "Minimum average views.",
+      "default": 0,
+      "minimum": 0
+    },
+    "audienceFemaleRateGte": {
+      "title": "Minimum female audience (%)",
+      "type": "number",
+      "description": "Best used with S3.",
+      "default": 0,
+      "minimum": 0,
+      "maximum": 100
+    },
+    "limit": {
+      "title": "Max similar creators",
+      "type": "integer",
+      "description": "Maximum similar creators to return.",
+      "default": 20,
+      "minimum": 1,
+      "maximum": 50
+    },
+    "lang": {
+      "title": "Response language",
+      "type": "string",
+      "description": "Language for translated code values.",
+      "editor": "select",
+      "enum": [
+        "en",
+        "cn"
+      ],
+      "enumTitles": [
+        "English",
+        "Chinese"
+      ],
+      "default": "en"
+    },
+    "maxRetries": {
+      "title": "Max retries",
+      "type": "integer",
+      "description": "Retries for temporary rate-limit and server errors.",
+      "default": 3,
+      "minimum": 1,
+      "maximum": 10
+    }
+  },
+  "required": []
+}

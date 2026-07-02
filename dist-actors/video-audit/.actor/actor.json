@@ -1,0 +1,128 @@
+{
+  "actorSpecification": 1,
+  "name": "creativault-video-audit",
+  "title": "CreatiVault Video Audit",
+  "description": "Submit TikTok, Instagram Reels, or YouTube Shorts for hook, script, storyboard, benchmark, and viral-factor analysis.",
+  "version": "1.0.0",
+  "buildTag": "latest",
+  "meta": {
+    "templateId": "starter-javascript"
+  },
+  "input": "./INPUT_SCHEMA.json",
+  "storages": {
+    "dataset": {
+      "actorSpecification": 1,
+      "title": "CreatiVault Results",
+      "views": {
+        "overview": {
+          "title": "Overview",
+          "transformation": {
+            "fields": [
+              "operation",
+              "platform",
+              "uid",
+              "username",
+              "nickname",
+              "followers_count",
+              "avg_views",
+              "engagement_rate",
+              "country_code",
+              "has_email",
+              "email",
+              "videoTitle",
+              "videoUrl",
+              "task_id",
+              "status",
+              "file_url"
+            ]
+          },
+          "display": {
+            "component": "table",
+            "columns": [
+              {
+                "label": "Operation",
+                "source": "operation",
+                "align": "left"
+              },
+              {
+                "label": "Platform",
+                "source": "platform",
+                "align": "left"
+              },
+              {
+                "label": "UID",
+                "source": "uid",
+                "align": "left"
+              },
+              {
+                "label": "Username",
+                "source": "username",
+                "align": "left"
+              },
+              {
+                "label": "Nickname",
+                "source": "nickname",
+                "align": "left"
+              },
+              {
+                "label": "Followers",
+                "source": "followers_count",
+                "align": "right"
+              },
+              {
+                "label": "Avg Views",
+                "source": "avg_views",
+                "align": "right"
+              },
+              {
+                "label": "Engagement",
+                "source": "engagement_rate",
+                "align": "right"
+              },
+              {
+                "label": "Country",
+                "source": "country_code",
+                "align": "center"
+              },
+              {
+                "label": "Has Email",
+                "source": "has_email",
+                "align": "center"
+              },
+              {
+                "label": "Email",
+                "source": "email",
+                "align": "left"
+              },
+              {
+                "label": "Video",
+                "source": "videoTitle",
+                "align": "left"
+              },
+              {
+                "label": "Video URL",
+                "source": "videoUrl",
+                "align": "left"
+              },
+              {
+                "label": "Task ID",
+                "source": "task_id",
+                "align": "left"
+              },
+              {
+                "label": "Status",
+                "source": "status",
+                "align": "left"
+              },
+              {
+                "label": "File URL",
+                "source": "file_url",
+                "align": "left"
+              }
+            ]
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,169 @@
+{
+  "title": "CreatiVault Outreach Email",
+  "description": "Send creator outreach emails, check task status, inspect contact history, todo follow-ups, metrics, config, and upload attachments. Pricing: $0.04/email and $0.08/attachment upload.",
+  "type": "object",
+  "schemaVersion": 1,
+  "properties": {
+    "operation": {
+      "title": "What do you want to do?",
+      "type": "string",
+      "description": "Choose the workflow. Failed requests and status polling are not charged.",
+      "editor": "select",
+      "enum": [
+        "outreachSend",
+        "outreachTask",
+        "outreachContact",
+        "outreachTodo",
+        "outreachMetrics",
+        "outreachConfig",
+        "outreachUpload"
+      ],
+      "enumTitles": [
+        "Send outreach email - $0.04/email",
+        "Check send task - free",
+        "Check contact history - free",
+        "Follow-up todo list - free",
+        "Outreach metrics - free",
+        "Outreach config - free",
+        "Upload attachment - $0.08/upload"
+      ],
+      "default": "outreachSend"
+    },
+    "to": {
+      "title": "Recipient email",
+      "type": "string",
+      "description": "Single outreach recipient email.",
+      "editor": "textfield"
+    },
+    "uid": {
+      "title": "Creator UID",
+      "type": "string",
+      "description": "Creator UID from search results. Required for single send.",
+      "editor": "textfield"
+    },
+    "nickname": {
+      "title": "Creator nickname",
+      "type": "string",
+      "description": "Optional creator nickname.",
+      "editor": "textfield"
+    },
+    "platform": {
+      "title": "Platform",
+      "type": "string",
+      "description": "Social platform.",
+      "editor": "select",
+      "enum": [
+        "",
+        "tiktok",
+        "youtube",
+        "instagram"
+      ],
+      "enumTitles": [
+        "Not set",
+        "TikTok",
+        "YouTube",
+        "Instagram"
+      ],
+      "default": ""
+    },
+    "recipients": {
+      "title": "Batch recipients",
+      "type": "array",
+      "description": "JSON array. Each item should include email and uid. Charged per accepted email.",
+      "editor": "json",
+      "items": {
+        "type": "object"
+      }
+    },
+    "subject": {
+      "title": "Email subject",
+      "type": "string",
+      "description": "Outreach email subject.",
+      "editor": "textfield"
+    },
+    "bodyText": {
+      "title": "Email text body",
+      "type": "string",
+      "description": "Plain-text outreach body.",
+      "editor": "textarea"
+    },
+    "bodyHtml": {
+      "title": "Email HTML body",
+      "type": "string",
+      "description": "HTML outreach body.",
+      "editor": "textarea"
+    },
+    "channel": {
+      "title": "Email channel",
+      "type": "string",
+      "description": "Outreach channel.",
+      "editor": "select",
+      "enum": [
+        "ses",
+        "gmail",
+        "outlook"
+      ],
+      "enumTitles": [
+        "SES",
+        "Gmail",
+        "Outlook"
+      ],
+      "default": "ses"
+    },
+    "taskId": {
+      "title": "Task ID",
+      "type": "string",
+      "description": "Task ID for status, data, export, or result operations.",
+      "editor": "textfield"
+    },
+    "email": {
+      "title": "Contact email",
+      "type": "string",
+      "description": "Email for contact history lookup.",
+      "editor": "textfield"
+    },
+    "fileUrl": {
+      "title": "Attachment file URL",
+      "type": "string",
+      "description": "Public file URL for attachment upload.",
+      "editor": "textfield"
+    },
+    "filename": {
+      "title": "Attachment filename",
+      "type": "string",
+      "description": "Optional filename override.",
+      "editor": "textfield"
+    },
+    "waitForCompletion": {
+      "title": "Wait for task completion",
+      "type": "boolean",
+      "description": "Poll task status before finishing. Status polling itself is free.",
+      "default": false
+    },
+    "pollIntervalSeconds": {
+      "title": "Poll interval seconds",
+      "type": "integer",
+      "description": "Polling interval for async tasks.",
+      "default": 15,
+      "minimum": 1
+    },
+    "maxPollAttempts": {
+      "title": "Max poll attempts",
+      "type": "integer",
+      "description": "Maximum polling attempts before timing out.",
+      "default": 60,
+      "minimum": 1
+    },
+    "maxRetries": {
+      "title": "Max retries",
+      "type": "integer",
+      "description": "Retries for temporary rate-limit and server errors.",
+      "default": 3,
+      "minimum": 1,
+      "maximum": 10
+    }
+  },
+  "required": [
+    "operation"
+  ]
+}

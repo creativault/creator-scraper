@@ -1,0 +1,115 @@
+{
+  "title": "CreatiVault Video Audit",
+  "description": "Submit TikTok, Instagram Reels, or YouTube Shorts for hook, script, storyboard, benchmark, and viral-factor analysis. Pricing: $0.80/audit and $0.08/media upload.",
+  "type": "object",
+  "schemaVersion": 1,
+  "properties": {
+    "operation": {
+      "title": "What do you want to do?",
+      "type": "string",
+      "description": "Choose the workflow. Failed requests and status polling are not charged.",
+      "editor": "select",
+      "enum": [
+        "videoAuditSubmit",
+        "mediaUpload",
+        "videoAuditStatus",
+        "videoAuditResult"
+      ],
+      "enumTitles": [
+        "Submit video audit - $0.80/audit",
+        "Upload media for audit - $0.08/upload",
+        "Check audit status - free",
+        "Get audit result - free"
+      ],
+      "default": "videoAuditSubmit"
+    },
+    "videoUrl": {
+      "title": "Video URL",
+      "type": "string",
+      "description": "TikTok, Instagram Reels, or YouTube Shorts URL.",
+      "editor": "textfield"
+    },
+    "fileUrl": {
+      "title": "Media file URL",
+      "type": "string",
+      "description": "Public file URL for media upload before audit.",
+      "editor": "textfield"
+    },
+    "filename": {
+      "title": "Upload filename",
+      "type": "string",
+      "description": "Optional filename override.",
+      "editor": "textfield"
+    },
+    "uploadedOssKey": {
+      "title": "Uploaded OSS key",
+      "type": "string",
+      "description": "OSS key returned by media upload.",
+      "editor": "textfield"
+    },
+    "brief": {
+      "title": "Audit brief",
+      "type": "string",
+      "description": "Optional brand/customer brief.",
+      "editor": "textarea"
+    },
+    "auditMode": {
+      "title": "Audit mode",
+      "type": "string",
+      "description": "Audit depth.",
+      "editor": "select",
+      "enum": [
+        "high",
+        "low"
+      ],
+      "enumTitles": [
+        "High",
+        "Low"
+      ],
+      "default": "high"
+    },
+    "enableBenchmark": {
+      "title": "Enable benchmark comparison",
+      "type": "boolean",
+      "description": "Compare against benchmark library.",
+      "default": false
+    },
+    "taskId": {
+      "title": "Task ID",
+      "type": "string",
+      "description": "Task ID for status, data, export, or result operations.",
+      "editor": "textfield"
+    },
+    "waitForCompletion": {
+      "title": "Wait for task completion",
+      "type": "boolean",
+      "description": "Poll task status before finishing. Status polling itself is free.",
+      "default": true
+    },
+    "pollIntervalSeconds": {
+      "title": "Poll interval seconds",
+      "type": "integer",
+      "description": "Polling interval for async tasks.",
+      "default": 10,
+      "minimum": 1
+    },
+    "maxPollAttempts": {
+      "title": "Max poll attempts",
+      "type": "integer",
+      "description": "Maximum polling attempts before timing out.",
+      "default": 60,
+      "minimum": 1
+    },
+    "maxRetries": {
+      "title": "Max retries",
+      "type": "integer",
+      "description": "Retries for temporary rate-limit and server errors.",
+      "default": 3,
+      "minimum": 1,
+      "maximum": 10
+    }
+  },
+  "required": [
+    "operation"
+  ]
+}

@@ -1,0 +1,52 @@
+{
+  "title": "CreatiVault Files & Webhook Utilities",
+  "description": "Utility actor for file delivery URL lookup and webhook connectivity verification. Pricing: File download URL and webhook verification are free utility operations unless future pricing is configured.",
+  "type": "object",
+  "schemaVersion": 1,
+  "properties": {
+    "operation": {
+      "title": "What do you want to do?",
+      "type": "string",
+      "description": "Choose the workflow. Failed requests and status polling are not charged.",
+      "editor": "select",
+      "enum": [
+        "fileDownloadUrl",
+        "webhookVerify"
+      ],
+      "enumTitles": [
+        "Get file download URL - free",
+        "Verify webhook connectivity - free"
+      ],
+      "default": "fileDownloadUrl"
+    },
+    "deliveryType": {
+      "title": "Delivery type",
+      "type": "string",
+      "description": "Delivery type for file download URL lookup.",
+      "editor": "textfield"
+    },
+    "deliveryParams": {
+      "title": "Delivery params",
+      "type": "object",
+      "description": "Strategy-specific delivery params.",
+      "editor": "json"
+    },
+    "challenge": {
+      "title": "Webhook challenge",
+      "type": "string",
+      "description": "Optional challenge string returned by webhook verification.",
+      "editor": "textfield"
+    },
+    "maxRetries": {
+      "title": "Max retries",
+      "type": "integer",
+      "description": "Retries for temporary rate-limit and server errors.",
+      "default": 3,
+      "minimum": 1,
+      "maximum": 10
+    }
+  },
+  "required": [
+    "operation"
+  ]
+}
