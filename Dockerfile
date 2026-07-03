@@ -12,6 +12,7 @@ RUN npm --quiet set progress=false \
 
 # Copy actor source and Apify metadata.
 COPY --chown=myuser main.js ./
+COPY --chown=myuser _industry_mapper.mjs influencer_industry_tree.json ./
 COPY --chown=myuser .actor .actor
 
 CMD npm start --silent

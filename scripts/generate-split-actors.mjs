@@ -453,8 +453,18 @@ ${actor.operationEnum ? `Available operations: ${actor.operationEnum.map((x) => 
 }
 
 function makeDockerfile(actor) {
-    const base = String(readText(join(root, 'Dockerfile')));
-    return base.replace('FROM apify/actor-node:20', `FROM apify/actor-node:20\nENV CV_ACTOR_OPERATION=${actor.defaultOperation}`);
+    const mapperCopyLine = 'COPY --chown=myuser _industry_mapper.mjs influencer_industry_tree.json ./';
+    let base = String(readText(join(root, 'Dockerfile')))
+        .replace('FROM apify/actor-node:20', `FROM apify/actor-node:20\nENV CV_ACTOR_OPERATION=${actor.defaultOperation}`)
+        .replace(new RegExp(`\\n${escapeRegExp(mapperCopyLine)}`), '');
+    if (actor.needsIndustryMapper) {
+        base = base.replace('COPY --chown=myuser main.js ./', `COPY --chown=myuser main.js ./\n${mapperCopyLine}`);
+    }
+    return base;
+}
+
+function escapeRegExp(value) {
+    return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 function readText(path) {
