@@ -49,20 +49,20 @@
     "countryCode": {
       "title": "Creator country code",
       "type": "string",
-      "description": "Comma-separated country codes, for example US,CA.",
+      "description": "Comma-separated ISO country codes, for example US,CA. Common country names such as United States/美国 are normalized automatically.",
       "editor": "textfield",
       "default": "US"
     },
     "languageCode": {
       "title": "Creator language code",
       "type": "string",
-      "description": "Comma-separated creator content language codes, for example en,es.",
+      "description": "Comma-separated creator content language codes, for example en,es. Common language names such as English/英语 are normalized automatically.",
       "editor": "textfield"
     },
     "industry": {
       "title": "Industry or category",
       "type": "string",
-      "description": "Industry/category filter. Category names or supported IDs can be used.",
+      "description": "Industry/category filter. Use supported English category names or IDs. For TikTok, Chinese labels such as 美妆 may not be accepted by the OpenAPI.",
       "editor": "textfield"
     },
     "followersCntGte": {
@@ -109,6 +109,96 @@
       "minimum": 0,
       "maximum": 100
     },
+    "last10AvgShortVideoViewsGte": {
+      "title": "Minimum short-video average views",
+      "type": "number",
+      "description": "YouTube only. Minimum last-10 short-video average views.",
+      "default": 0,
+      "minimum": 0
+    },
+    "last10AvgShortVideoViewsLte": {
+      "title": "Maximum short-video average views",
+      "type": "number",
+      "description": "YouTube only. Leave as 0 to omit.",
+      "default": 0,
+      "minimum": 0
+    },
+    "last10AvgShortVideoInteractionRateGte": {
+      "title": "Minimum short-video interaction rate (%)",
+      "type": "number",
+      "description": "YouTube only. 0-100 percentage.",
+      "default": 0,
+      "minimum": 0,
+      "maximum": 100
+    },
+    "last10AvgShortVideoInteractionRateLte": {
+      "title": "Maximum short-video interaction rate (%)",
+      "type": "number",
+      "description": "YouTube only. Leave as 0 to omit.",
+      "default": 0,
+      "minimum": 0,
+      "maximum": 100
+    },
+    "last10AvgVideoLikesCntGte": {
+      "title": "Minimum average likes",
+      "type": "number",
+      "description": "Twitter/X only. Minimum last-10 average likes.",
+      "default": 0,
+      "minimum": 0
+    },
+    "last10AvgVideoLikesCntLte": {
+      "title": "Maximum average likes",
+      "type": "number",
+      "description": "Twitter/X only. Leave as 0 to omit.",
+      "default": 0,
+      "minimum": 0
+    },
+    "lastVideoViewsCntGte": {
+      "title": "Minimum latest video views",
+      "type": "integer",
+      "description": "Twitter/X only. Minimum latest video views.",
+      "default": 0,
+      "minimum": 0
+    },
+    "lastVideoViewsCntLte": {
+      "title": "Maximum latest video views",
+      "type": "integer",
+      "description": "Twitter/X only. Leave as 0 to omit.",
+      "default": 0,
+      "minimum": 0
+    },
+    "last10VideoViewsPerSubGte": {
+      "title": "Minimum views/followers (%)",
+      "type": "number",
+      "description": "Twitter/X only. Last-10 average views per follower.",
+      "default": 0,
+      "minimum": 0,
+      "maximum": 100
+    },
+    "last10VideoViewsPerSubLte": {
+      "title": "Maximum views/followers (%)",
+      "type": "number",
+      "description": "Twitter/X only. Leave as 0 to omit.",
+      "default": 0,
+      "minimum": 0,
+      "maximum": 100
+    },
+    "last10MedVideoViewsPerSubGte": {
+      "title": "Minimum median views/followers (%)",
+      "type": "number",
+      "description": "Twitter/X only. Last-10 median views per follower.",
+      "default": 0,
+      "minimum": 0,
+      "maximum": 100
+    },
+    "last10MedVideoViewsPerSubLte": {
+      "title": "Maximum median views/followers (%)",
+      "type": "number",
+      "description": "Twitter/X only. Leave as 0 to omit.",
+      "default": 0,
+      "minimum": 0,
+      "maximum": 100
+    },
     "hasEmail": {
       "title": "Only creators with email",
       "type": "boolean",
@@ -127,6 +217,18 @@
       "description": "TikTok only.",
       "default": false
     },
+    "hasLine": {
+      "title": "TikTok has LINE",
+      "type": "boolean",
+      "description": "TikTok only.",
+      "default": false
+    },
+    "hasZalo": {
+      "title": "TikTok has Zalo",
+      "type": "boolean",
+      "description": "TikTok only.",
+      "default": false
+    },
     "isProductKol": {
       "title": "Instagram product KOL",
       "type": "boolean",
@@ -138,6 +240,35 @@
       "type": "boolean",
       "description": "YouTube/Instagram filter when supported.",
       "default": false
+    },
+    "isBlueVerified": {
+      "title": "Twitter/X blue verified",
+      "type": "boolean",
+      "description": "Twitter/X only.",
+      "default": false
+    },
+    "isVerified": {
+      "title": "Verification status",
+      "type": "string",
+      "description": "Twitter/X optional verification filter.",
+      "editor": "select",
+      "enum": [
+        "",
+        "1",
+        "0"
+      ],
+      "enumTitles": [
+        "Any",
+        "Verified",
+        "Not verified"
+      ],
+      "default": ""
+    },
+    "kolStyle": {
+      "title": "KOL style tags",
+      "type": "string",
+      "description": "Twitter/X only. Comma-separated style tags.",
+      "editor": "textfield"
     },
     "gender": {
       "title": "Creator gender",
@@ -159,19 +290,33 @@
     "audienceCountryCodeList": {
       "title": "Audience country codes",
       "type": "string",
-      "description": "Comma-separated. Best used with S3.",
+      "description": "Comma-separated ISO country codes. Common country names are normalized automatically. Best used with S3.",
       "editor": "textfield"
     },
     "audienceLanguageCodeList": {
       "title": "Audience language codes",
       "type": "string",
-      "description": "Comma-separated. Best used with S3.",
+      "description": "Comma-separated language codes. Common language names are normalized automatically. Best used with S3.",
+      "editor": "textfield"
+    },
+    "audienceAgeList": {
+      "title": "Audience age groups",
+      "type": "string",
+      "description": "Comma-separated age group IDs or labels when supported. Best used with S3.",
       "editor": "textfield"
     },
     "audienceFemaleRateGte": {
       "title": "Minimum female audience (%)",
       "type": "number",
       "description": "Best used with S3.",
+      "default": 0,
+      "minimum": 0,
+      "maximum": 100
+    },
+    "audienceFemaleRateLte": {
+      "title": "Maximum female audience (%)",
+      "type": "number",
+      "description": "Best used with S3. Leave as 0 to omit.",
       "default": 0,
       "minimum": 0,
       "maximum": 100
@@ -187,6 +332,70 @@
       "type": "string",
       "description": "YYYY-MM-DD.",
       "editor": "textfield"
+    },
+    "productCategoryIdArray": {
+      "title": "TikTok product category IDs",
+      "type": "string",
+      "description": "TikTok only. Comma-separated product category IDs.",
+      "editor": "textfield"
+    },
+    "last30dayGmvGte": {
+      "title": "TikTok minimum 30-day GMV",
+      "type": "number",
+      "description": "TikTok commerce filter.",
+      "default": 0,
+      "minimum": 0
+    },
+    "last30dayGmvLte": {
+      "title": "TikTok maximum 30-day GMV",
+      "type": "number",
+      "description": "TikTok commerce filter. Leave as 0 to omit.",
+      "default": 0,
+      "minimum": 0
+    },
+    "last30dayGpmGte": {
+      "title": "TikTok minimum 30-day GPM",
+      "type": "number",
+      "description": "TikTok commerce filter.",
+      "default": 0,
+      "minimum": 0
+    },
+    "last30dayGpmLte": {
+      "title": "TikTok maximum 30-day GPM",
+      "type": "number",
+      "description": "TikTok commerce filter. Leave as 0 to omit.",
+      "default": 0,
+      "minimum": 0
+    },
+    "last30dayGmvPerBuyerGte": {
+      "title": "TikTok minimum 30-day GMV/buyer",
+      "type": "number",
+      "description": "TikTok commerce filter.",
+      "default": 0,
+      "minimum": 0
+    },
+    "last30dayGmvPerBuyerLte": {
+      "title": "TikTok maximum 30-day GMV/buyer",
+      "type": "number",
+      "description": "TikTok commerce filter. Leave as 0 to omit.",
+      "default": 0,
+      "minimum": 0
+    },
+    "last30dayCommissionRateGte": {
+      "title": "TikTok minimum commission rate (%)",
+      "type": "number",
+      "description": "TikTok commerce filter.",
+      "default": 0,
+      "minimum": 0,
+      "maximum": 100
+    },
+    "last30dayCommissionRateLte": {
+      "title": "TikTok maximum commission rate (%)",
+      "type": "number",
+      "description": "TikTok commerce filter. Leave as 0 to omit.",
+      "default": 0,
+      "minimum": 0,
+      "maximum": 100
     },
     "sortField": {
       "title": "Sort field",

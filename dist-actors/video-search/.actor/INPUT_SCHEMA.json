@@ -23,6 +23,12 @@
       ],
       "default": ""
     },
+    "unionUserIds": {
+      "title": "Creator IDs",
+      "type": "string",
+      "description": "Optional comma-separated creator IDs to filter videos.",
+      "editor": "textfield"
+    },
     "hashtag": {
       "title": "Hashtags",
       "type": "array",

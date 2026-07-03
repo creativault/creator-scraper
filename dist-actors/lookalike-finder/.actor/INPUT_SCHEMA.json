@@ -57,13 +57,13 @@
     "countryCode": {
       "title": "Target country code",
       "type": "string",
-      "description": "Optional target region/country code.",
+      "description": "Optional target ISO country code. Common country names such as United States/美国 are normalized automatically.",
       "editor": "textfield"
     },
     "languageCode": {
       "title": "Target language code",
       "type": "string",
-      "description": "Optional target language code.",
+      "description": "Optional target language code. Common language names such as English/英语 are normalized automatically.",
       "editor": "textfield"
     },
     "followersCntGte": {
@@ -102,6 +102,23 @@
       "default": 20,
       "minimum": 1,
       "maximum": 50
+    },
+    "serviceLevel": {
+      "title": "Creator data depth",
+      "type": "string",
+      "description": "S1 basic profile, S2 enriched profile/contact data, S3 deep audience profile.",
+      "editor": "select",
+      "enum": [
+        "S1",
+        "S2",
+        "S3"
+      ],
+      "enumTitles": [
+        "S1 basic - $1.20/1k creators",
+        "S2 enriched - $4/1k creators",
+        "S3 audience profile - $8/1k creators"
+      ],
+      "default": "S2"
     },
     "lang": {
       "title": "Response language",

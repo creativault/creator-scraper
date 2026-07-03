@@ -4,6 +4,217 @@ await Actor.init();
 
 const MAX_SEARCH_PAGES = 200;
 const TERMINAL_STATUSES = new Set(['completed', 'failed', 'timeout']);
+const COUNTRY_CODE_ALIASES = new Map([
+    ['美国', 'US'],
+    ['美國', 'US'],
+    ['united states', 'US'],
+    ['united states of america', 'US'],
+    ['usa', 'US'],
+    ['us', 'US'],
+    ['英国', 'GB'],
+    ['英國', 'GB'],
+    ['united kingdom', 'GB'],
+    ['uk', 'GB'],
+    ['great britain', 'GB'],
+    ['加拿大', 'CA'],
+    ['canada', 'CA'],
+    ['澳大利亚', 'AU'],
+    ['澳大利亞', 'AU'],
+    ['australia', 'AU'],
+    ['德国', 'DE'],
+    ['德國', 'DE'],
+    ['germany', 'DE'],
+    ['法国', 'FR'],
+    ['法國', 'FR'],
+    ['france', 'FR'],
+    ['意大利', 'IT'],
+    ['italy', 'IT'],
+    ['西班牙', 'ES'],
+    ['spain', 'ES'],
+    ['日本', 'JP'],
+    ['japan', 'JP'],
+    ['韩国', 'KR'],
+    ['韓國', 'KR'],
+    ['south korea', 'KR'],
+    ['korea', 'KR'],
+    ['中国', 'CN'],
+    ['中國', 'CN'],
+    ['china', 'CN'],
+    ['巴西', 'BR'],
+    ['brazil', 'BR'],
+    ['墨西哥', 'MX'],
+    ['mexico', 'MX'],
+    ['印度', 'IN'],
+    ['india', 'IN'],
+    ['香港', 'HK'],
+    ['hong kong', 'HK'],
+    ['台湾', 'TW'],
+    ['台灣', 'TW'],
+    ['taiwan', 'TW'],
+    ['新加坡', 'SG'],
+    ['singapore', 'SG'],
+    ['马来西亚', 'MY'],
+    ['馬來西亞', 'MY'],
+    ['malaysia', 'MY'],
+    ['泰国', 'TH'],
+    ['泰國', 'TH'],
+    ['thailand', 'TH'],
+    ['越南', 'VN'],
+    ['vietnam', 'VN'],
+    ['印度尼西亚', 'ID'],
+    ['印尼', 'ID'],
+    ['indonesia', 'ID'],
+    ['菲律宾', 'PH'],
+    ['菲律賓', 'PH'],
+    ['philippines', 'PH'],
+    ['沙特阿拉伯', 'SA'],
+    ['saudi arabia', 'SA'],
+    ['阿联酋', 'AE'],
+    ['阿聯酋', 'AE'],
+    ['united arab emirates', 'AE'],
+    ['uae', 'AE'],
+    ['俄罗斯', 'RU'],
+    ['俄羅斯', 'RU'],
+    ['russia', 'RU'],
+    ['荷兰', 'NL'],
+    ['荷蘭', 'NL'],
+    ['netherlands', 'NL'],
+    ['瑞典', 'SE'],
+    ['sweden', 'SE'],
+    ['挪威', 'NO'],
+    ['norway', 'NO'],
+    ['波兰', 'PL'],
+    ['波蘭', 'PL'],
+    ['poland', 'PL'],
+    ['土耳其', 'TR'],
+    ['turkey', 'TR'],
+    ['埃及', 'EG'],
+    ['egypt', 'EG'],
+    ['尼日利亚', 'NG'],
+    ['尼日利亞', 'NG'],
+    ['nigeria', 'NG'],
+    ['南非', 'ZA'],
+    ['south africa', 'ZA'],
+    ['肯尼亚', 'KE'],
+    ['肯尼亞', 'KE'],
+    ['kenya', 'KE'],
+    ['阿根廷', 'AR'],
+    ['argentina', 'AR'],
+    ['哥伦比亚', 'CO'],
+    ['哥倫比亞', 'CO'],
+    ['colombia', 'CO'],
+    ['智利', 'CL'],
+    ['chile', 'CL'],
+    ['秘鲁', 'PE'],
+    ['秘魯', 'PE'],
+    ['peru', 'PE'],
+    ['新西兰', 'NZ'],
+    ['新西蘭', 'NZ'],
+    ['new zealand', 'NZ'],
+    ['爱尔兰', 'IE'],
+    ['愛爾蘭', 'IE'],
+    ['ireland', 'IE'],
+    ['以色列', 'IL'],
+    ['israel', 'IL'],
+    ['巴基斯坦', 'PK'],
+    ['pakistan', 'PK'],
+    ['孟加拉', 'BD'],
+    ['孟加拉国', 'BD'],
+    ['孟加拉國', 'BD'],
+    ['bangladesh', 'BD'],
+    ['柬埔寨', 'KH'],
+    ['cambodia', 'KH'],
+    ['缅甸', 'MM'],
+    ['緬甸', 'MM'],
+    ['myanmar', 'MM'],
+    ['老挝', 'LA'],
+    ['老撾', 'LA'],
+    ['laos', 'LA'],
+    ['东南亚', 'TH,VN,ID,PH,MY,SG,KH,MM,LA'],
+    ['東南亞', 'TH,VN,ID,PH,MY,SG,KH,MM,LA'],
+    ['southeast asia', 'TH,VN,ID,PH,MY,SG,KH,MM,LA'],
+    ['欧洲', 'GB,DE,FR,ES,IT,NL,SE,NO,PL,PT,IE,AT,CH,BE,DK,FI,GR,CZ,RO,HU'],
+    ['歐洲', 'GB,DE,FR,ES,IT,NL,SE,NO,PL,PT,IE,AT,CH,BE,DK,FI,GR,CZ,RO,HU'],
+    ['europe', 'GB,DE,FR,ES,IT,NL,SE,NO,PL,PT,IE,AT,CH,BE,DK,FI,GR,CZ,RO,HU'],
+    ['中东', 'SA,AE,QA,KW,BH,OM,JO,IL,EG,IQ'],
+    ['中東', 'SA,AE,QA,KW,BH,OM,JO,IL,EG,IQ'],
+    ['middle east', 'SA,AE,QA,KW,BH,OM,JO,IL,EG,IQ'],
+    ['拉美', 'BR,MX,AR,CO,CL,PE,EC,VE'],
+    ['南美', 'BR,MX,AR,CO,CL,PE,EC,VE'],
+    ['latin america', 'BR,MX,AR,CO,CL,PE,EC,VE'],
+    ['south america', 'BR,MX,AR,CO,CL,PE,EC,VE'],
+    ['北美', 'US,CA'],
+    ['north america', 'US,CA'],
+    ['东亚', 'JP,KR,CN,HK,TW'],
+    ['東亞', 'JP,KR,CN,HK,TW'],
+    ['east asia', 'JP,KR,CN,HK,TW'],
+    ['南亚', 'IN,PK,BD,LK,NP'],
+    ['南亞', 'IN,PK,BD,LK,NP'],
+    ['south asia', 'IN,PK,BD,LK,NP'],
+    ['非洲', 'NG,ZA,KE,EG,GH,ET,TZ'],
+    ['africa', 'NG,ZA,KE,EG,GH,ET,TZ'],
+]);
+const LANGUAGE_CODE_ALIASES = new Map([
+    ['英语', 'en'],
+    ['英文', 'en'],
+    ['english', 'en'],
+    ['en', 'en'],
+    ['中文', 'zh'],
+    ['汉语', 'zh'],
+    ['普通话', 'zh'],
+    ['chinese', 'zh'],
+    ['zh', 'zh'],
+    ['西班牙语', 'es'],
+    ['spanish', 'es'],
+    ['es', 'es'],
+    ['法语', 'fr'],
+    ['french', 'fr'],
+    ['fr', 'fr'],
+    ['德语', 'de'],
+    ['german', 'de'],
+    ['de', 'de'],
+    ['日语', 'ja'],
+    ['日文', 'ja'],
+    ['japanese', 'ja'],
+    ['ja', 'ja'],
+    ['韩语', 'ko'],
+    ['韩文', 'ko'],
+    ['korean', 'ko'],
+    ['ko', 'ko'],
+    ['葡萄牙语', 'pt'],
+    ['portuguese', 'pt'],
+    ['pt', 'pt'],
+    ['俄语', 'ru'],
+    ['russian', 'ru'],
+    ['ru', 'ru'],
+    ['阿拉伯语', 'ar'],
+    ['arabic', 'ar'],
+    ['ar', 'ar'],
+    ['印地语', 'hi'],
+    ['hindi', 'hi'],
+    ['hi', 'hi'],
+    ['意大利语', 'it'],
+    ['italian', 'it'],
+    ['it', 'it'],
+    ['荷兰语', 'nl'],
+    ['dutch', 'nl'],
+    ['nl', 'nl'],
+    ['泰语', 'th'],
+    ['thai', 'th'],
+    ['th', 'th'],
+    ['越南语', 'vi'],
+    ['vietnamese', 'vi'],
+    ['vi', 'vi'],
+    ['印尼语', 'id'],
+    ['indonesian', 'id'],
+    ['id', 'id'],
+    ['马来语', 'ms'],
+    ['malay', 'ms'],
+    ['ms', 'ms'],
+    ['菲律宾语', 'tl'],
+    ['tagalog', 'tl'],
+    ['tl', 'tl'],
+]);
 const CHARGE_EVENTS = {
     creatorResultS1: 'creator-result-s1',
     creatorResultS2: 'creator-result-s2',
@@ -148,7 +359,7 @@ async function creatorSearch(input, client) {
     const size = clampNumber(input.size || input.sizePerPage || 50, 1, 100);
     const maxResults = clampNumber(input.maxResults || size, 1, 100000);
     const maxPages = Math.min(Math.ceil(maxResults / size), MAX_SEARCH_PAGES);
-    const baseBody = buildCreatorSearchBody(input, platform, size);
+    const baseBody = await buildCreatorSearchBody(input, platform, size);
     const endpoint = `/openapi/v1/creators/${platform}/search`;
 
     return collectPaged({
@@ -204,8 +415,8 @@ async function lookalike(input, client) {
         platform: clean(input.platform),
         profile_url: clean(input.profileUrl),
         target_platform: clean(input.targetPlatform),
-        target_region: clean(input.targetRegion || input.countryCode),
-        target_language: clean(input.targetLanguage || input.languageCode),
+        target_region: normalizeCountryCodes(input.targetRegion || input.countryCode),
+        target_language: normalizeLanguageCodes(input.targetLanguage || input.languageCode),
         limit: input.limit || input.maxResults || 20,
         follower_min: positiveOrUndefined(input.followersCntGte),
         follower_max: positiveOrUndefined(input.followersCntLte),
@@ -675,7 +886,7 @@ async function parseOpenApiResponse(response) {
     return json;
 }
 
-function buildCreatorSearchBody(input, platform, size) {
+async function buildCreatorSearchBody(input, platform, size) {
     const common = {
         page: input.page || 1,
         size,
@@ -684,14 +895,14 @@ function buildCreatorSearchBody(input, platform, size) {
         service_level: input.serviceLevel || 'S2',
         lang: input.lang || 'en',
         keyword: clean(input.keyword),
-        country_code: clean(input.countryCode),
-        language_code: clean(input.languageCode),
+        country_code: normalizeCountryCodes(input.countryCode),
+        language_code: normalizeLanguageCodes(input.languageCode),
         gender: normalizeGender(input.gender),
         has_email: trueFlag(input.hasEmail),
         followers_cnt_gte: positiveOrUndefined(input.followersCntGte),
         followers_cnt_lte: positiveOrUndefined(input.followersCntLte),
-        industry: clean(input.industry),
-        audience_country_code_list: clean(input.audienceCountryCodeList),
+        industry: await normalizeIndustry(input.industry),
+        audience_country_code_list: normalizeCountryCodes(input.audienceCountryCodeList),
         audience_age_list: clean(input.audienceAgeList),
         audience_female_rate_gte: positiveOrUndefined(input.audienceFemaleRateGte),
         audience_female_rate_lte: positiveOrUndefined(input.audienceFemaleRateLte),
@@ -711,7 +922,7 @@ function buildCreatorSearchBody(input, platform, size) {
             last_video_publish_date_gte: clean(input.lastVideoPublishDateGte),
             last_video_publish_date_lte: clean(input.lastVideoPublishDateLte),
             product_category_id_array: clean(input.productCategoryIdArray),
-            audience_language_code_list: clean(input.audienceLanguageCodeList),
+            audience_language_code_list: normalizeLanguageCodes(input.audienceLanguageCodeList),
             last30day_gmv_gte: positiveOrUndefined(input.last30dayGmvGte),
             last30day_gmv_lte: positiveOrUndefined(input.last30dayGmvLte),
             last30day_gpm_gte: positiveOrUndefined(input.last30dayGpmGte),
@@ -736,7 +947,7 @@ function buildCreatorSearchBody(input, platform, size) {
             last10_avg_interaction_rate_short_lte: positiveOrUndefined(input.last10AvgShortVideoInteractionRateLte),
             last_video_publish_date_gte: clean(input.lastVideoPublishDateGte),
             last_video_publish_date_lte: clean(input.lastVideoPublishDateLte),
-            audience_language_code_list: clean(input.audienceLanguageCodeList),
+            audience_language_code_list: normalizeLanguageCodes(input.audienceLanguageCodeList),
         });
     } else if (platform === 'instagram') {
         Object.assign(platformFields, {
@@ -752,10 +963,34 @@ function buildCreatorSearchBody(input, platform, size) {
             last_video_publish_time_lte: clean(input.lastVideoPublishDateLte),
             female_ratio_gte: positiveOrUndefined(input.femaleRatioGte || input.audienceFemaleRateGte),
             female_ratio_lte: positiveOrUndefined(input.femaleRatioLte || input.audienceFemaleRateLte),
-            audience_language_list: clean(input.audienceLanguageList || input.audienceLanguageCodeList),
+            audience_language_list: normalizeLanguageCodes(input.audienceLanguageList || input.audienceLanguageCodeList),
         });
         delete common.audience_female_rate_gte;
         delete common.audience_female_rate_lte;
+    } else if (platform === 'twitter') {
+        Object.assign(platformFields, {
+            sort_field: input.sortField || 'followers_cnt',
+            has_whatsapp: trueFlag(input.hasWhatsapp),
+            is_blue_verified: trueFlag(input.isBlueVerified),
+            is_verified: clean(input.isVerified),
+            is_ai_creator: trueFlag(input.isAiCreator),
+            kol_style: clean(input.kolStyle),
+            last10_avg_video_views_cnt_gte: positiveOrUndefined(input.last10AvgVideoViewsGte),
+            last10_avg_video_views_cnt_lte: positiveOrUndefined(input.last10AvgVideoViewsLte),
+            last10_avg_video_interaction_rate_gte: positiveOrUndefined(input.last10AvgVideoInteractionRateGte),
+            last10_avg_video_interaction_rate_lte: positiveOrUndefined(input.last10AvgVideoInteractionRateLte),
+            last10_avg_video_likes_cnt_gte: positiveOrUndefined(input.last10AvgVideoLikesCntGte),
+            last10_avg_video_likes_cnt_lte: positiveOrUndefined(input.last10AvgVideoLikesCntLte),
+            last_video_views_cnt_gte: positiveOrUndefined(input.lastVideoViewsCntGte),
+            last_video_views_cnt_lte: positiveOrUndefined(input.lastVideoViewsCntLte),
+            last_video_publish_date_gte: clean(input.lastVideoPublishDateGte),
+            last_video_publish_date_lte: clean(input.lastVideoPublishDateLte),
+            last10_video_views_per_sub_gte: positiveOrUndefined(input.last10VideoViewsPerSubGte),
+            last10_video_views_per_sub_lte: positiveOrUndefined(input.last10VideoViewsPerSubLte),
+            last10_med_video_views_per_sub_gte: positiveOrUndefined(input.last10MedVideoViewsPerSubGte),
+            last10_med_video_views_per_sub_lte: positiveOrUndefined(input.last10MedVideoViewsPerSubLte),
+            audience_language_code_list: normalizeLanguageCodes(input.audienceLanguageCodeList),
+        });
     }
 
     return buildBody(input, { ...common, ...platformFields });
@@ -1003,6 +1238,56 @@ function parseList(value) {
     if (value === undefined || value === null || value === '') return undefined;
     if (Array.isArray(value)) return value.map(v => String(v).trim()).filter(Boolean);
     return String(value).split('\n').flatMap(part => part.split(',')).map(v => v.trim()).filter(Boolean);
+}
+
+function normalizeCountryCodes(value) {
+    const values = parseList(value);
+    if (!values?.length) return undefined;
+    return values.map(mapCountryCode).filter(Boolean).join(',');
+}
+
+function mapCountryCode(value) {
+    const raw = clean(value);
+    if (!raw) return undefined;
+    const normalized = raw.toLowerCase().replace(/\./g, '').replace(/\s+/g, ' ').trim();
+    const alias = COUNTRY_CODE_ALIASES.get(normalized);
+    if (alias) return alias;
+    if (/^[a-z]{2}$/i.test(raw)) return raw.toUpperCase();
+    return raw;
+}
+
+function normalizeLanguageCodes(value) {
+    const values = parseList(value);
+    if (!values?.length) return undefined;
+    return values.map(mapLanguageCode).filter(Boolean).join(',');
+}
+
+function mapLanguageCode(value) {
+    const raw = clean(value);
+    if (!raw) return undefined;
+    const normalized = raw.toLowerCase().replace(/\./g, '').replace(/\s+/g, ' ').trim();
+    const alias = LANGUAGE_CODE_ALIASES.get(normalized);
+    if (alias) return alias;
+    if (/^[a-z]{2}$/i.test(raw)) return raw.toLowerCase();
+    return raw;
+}
+
+async function normalizeIndustry(value) {
+    const raw = clean(value);
+    if (!raw) return undefined;
+    const { convertToLeafIds, suggestIndustryMatches } = await import('./_industry_mapper.mjs');
+    const leafIds = convertToLeafIds(raw);
+    if (leafIds.length > 0) return leafIds.join(',');
+
+    const suggestions = suggestIndustryMatches(raw, 3)
+        .flatMap(item => item.suggestions || [])
+        .map(item => `${item.name} (${item.id})`)
+        .slice(0, 3);
+
+    const suffix = suggestions.length
+        ? ` Suggestions: ${suggestions.join(', ')}.`
+        : ' Use a supported category ID, English category name, or known alias.';
+    throw new Error(`Unknown industry/category "${raw}".${suffix}`);
 }
 
 function normalizeRecipients(value) {

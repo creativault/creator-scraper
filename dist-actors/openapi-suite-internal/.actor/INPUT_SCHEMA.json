@@ -26,7 +26,11 @@
         "outreachTask",
         "outreachContact",
         "outreachTodo",
-        "outreachMetrics"
+        "outreachMetrics",
+        "outreachConfig",
+        "outreachUpload",
+        "fileDownloadUrl",
+        "webhookVerify"
       ],
       "enumTitles": [
         "Creator search - S1 $1.20/1k, S2 $4/1k, S3 $8/1k",
@@ -45,7 +49,11 @@
         "Check outreach task - free",
         "Check outreach contact - free",
         "Outreach follow-up todo - free",
-        "Outreach metrics - free"
+        "Outreach metrics - free",
+        "Outreach config - free",
+        "Upload outreach attachment - $0.08/upload",
+        "Get file download URL - free",
+        "Verify webhook - free"
       ],
       "default": "creatorSearch"
     },
@@ -187,6 +195,96 @@
       "minimum": 0,
       "maximum": 100
     },
+    "last10AvgShortVideoViewsGte": {
+      "title": "Minimum short-video average views",
+      "type": "number",
+      "description": "YouTube only. Minimum last-10 short-video average views.",
+      "default": 0,
+      "minimum": 0
+    },
+    "last10AvgShortVideoViewsLte": {
+      "title": "Maximum short-video average views",
+      "type": "number",
+      "description": "YouTube only. Leave as 0 to omit.",
+      "default": 0,
+      "minimum": 0
+    },
+    "last10AvgShortVideoInteractionRateGte": {
+      "title": "Minimum short-video interaction rate (%)",
+      "type": "number",
+      "description": "YouTube only. 0-100 percentage.",
+      "default": 0,
+      "minimum": 0,
+      "maximum": 100
+    },
+    "last10AvgShortVideoInteractionRateLte": {
+      "title": "Maximum short-video interaction rate (%)",
+      "type": "number",
+      "description": "YouTube only. Leave as 0 to omit.",
+      "default": 0,
+      "minimum": 0,
+      "maximum": 100
+    },
+    "last10AvgVideoLikesCntGte": {
+      "title": "Minimum average likes",
+      "type": "number",
+      "description": "Twitter/X only. Minimum last-10 average likes.",
+      "default": 0,
+      "minimum": 0
+    },
+    "last10AvgVideoLikesCntLte": {
+      "title": "Maximum average likes",
+      "type": "number",
+      "description": "Twitter/X only. Leave as 0 to omit.",
+      "default": 0,
+      "minimum": 0
+    },
+    "lastVideoViewsCntGte": {
+      "title": "Minimum latest video views",
+      "type": "integer",
+      "description": "Twitter/X only.",
+      "default": 0,
+      "minimum": 0
+    },
+    "lastVideoViewsCntLte": {
+      "title": "Maximum latest video views",
+      "type": "integer",
+      "description": "Twitter/X only. Leave as 0 to omit.",
+      "default": 0,
+      "minimum": 0
+    },
+    "last10VideoViewsPerSubGte": {
+      "title": "Minimum views/followers (%)",
+      "type": "number",
+      "description": "Twitter/X only.",
+      "default": 0,
+      "minimum": 0,
+      "maximum": 100
+    },
+    "last10VideoViewsPerSubLte": {
+      "title": "Maximum views/followers (%)",
+      "type": "number",
+      "description": "Twitter/X only. Leave as 0 to omit.",
+      "default": 0,
+      "minimum": 0,
+      "maximum": 100
+    },
+    "last10MedVideoViewsPerSubGte": {
+      "title": "Minimum median views/followers (%)",
+      "type": "number",
+      "description": "Twitter/X only.",
+      "default": 0,
+      "minimum": 0,
+      "maximum": 100
+    },
+    "last10MedVideoViewsPerSubLte": {
+      "title": "Maximum median views/followers (%)",
+      "type": "number",
+      "description": "Twitter/X only. Leave as 0 to omit.",
+      "default": 0,
+      "minimum": 0,
+      "maximum": 100
+    },
     "hasEmail": {
       "title": "Only creators with email",
       "type": "boolean",
@@ -205,6 +303,18 @@
       "description": "TikTok only.",
       "default": false
     },
+    "hasLine": {
+      "title": "TikTok has LINE",
+      "type": "boolean",
+      "description": "TikTok only.",
+      "default": false
+    },
+    "hasZalo": {
+      "title": "TikTok has Zalo",
+      "type": "boolean",
+      "description": "TikTok only.",
+      "default": false
+    },
     "isProductKol": {
       "title": "Instagram product KOL",
       "type": "boolean",
@@ -216,6 +326,35 @@
       "type": "boolean",
       "description": "YouTube/Instagram filter when supported.",
       "default": false
+    },
+    "isBlueVerified": {
+      "title": "Twitter/X blue verified",
+      "type": "boolean",
+      "description": "Twitter/X only.",
+      "default": false
+    },
+    "isVerified": {
+      "title": "Verification status",
+      "type": "string",
+      "description": "Twitter/X optional verification filter.",
+      "editor": "select",
+      "enum": [
+        "",
+        "1",
+        "0"
+      ],
+      "enumTitles": [
+        "Any",
+        "Verified",
+        "Not verified"
+      ],
+      "default": ""
+    },
+    "kolStyle": {
+      "title": "KOL style tags",
+      "type": "string",
+      "description": "Twitter/X only. Comma-separated style tags.",
+      "editor": "textfield"
     },
     "gender": {
       "title": "Creator gender",
@@ -246,10 +385,24 @@
       "description": "Audience language code list, comma-separated. Best used with S3.",
       "editor": "textfield"
     },
+    "audienceAgeList": {
+      "title": "Audience age groups",
+      "type": "string",
+      "description": "Comma-separated age group IDs or labels when supported. Best used with S3.",
+      "editor": "textfield"
+    },
     "audienceFemaleRateGte": {
       "title": "Minimum female audience (%)",
       "type": "number",
       "description": "Minimum female audience percentage. Best used with S3.",
+      "default": 0,
+      "minimum": 0,
+      "maximum": 100
+    },
+    "audienceFemaleRateLte": {
+      "title": "Maximum female audience (%)",
+      "type": "number",
+      "description": "Maximum female audience percentage. Leave as 0 to omit.",
       "default": 0,
       "minimum": 0,
       "maximum": 100
@@ -265,6 +418,70 @@
       "type": "string",
       "description": "YYYY-MM-DD.",
       "editor": "textfield"
+    },
+    "productCategoryIdArray": {
+      "title": "TikTok product category IDs",
+      "type": "string",
+      "description": "TikTok only. Comma-separated product category IDs.",
+      "editor": "textfield"
+    },
+    "last30dayGmvGte": {
+      "title": "TikTok minimum 30-day GMV",
+      "type": "number",
+      "description": "TikTok commerce filter.",
+      "default": 0,
+      "minimum": 0
+    },
+    "last30dayGmvLte": {
+      "title": "TikTok maximum 30-day GMV",
+      "type": "number",
+      "description": "TikTok commerce filter. Leave as 0 to omit.",
+      "default": 0,
+      "minimum": 0
+    },
+    "last30dayGpmGte": {
+      "title": "TikTok minimum 30-day GPM",
+      "type": "number",
+      "description": "TikTok commerce filter.",
+      "default": 0,
+      "minimum": 0
+    },
+    "last30dayGpmLte": {
+      "title": "TikTok maximum 30-day GPM",
+      "type": "number",
+      "description": "TikTok commerce filter. Leave as 0 to omit.",
+      "default": 0,
+      "minimum": 0
+    },
+    "last30dayGmvPerBuyerGte": {
+      "title": "TikTok minimum 30-day GMV/buyer",
+      "type": "number",
+      "description": "TikTok commerce filter.",
+      "default": 0,
+      "minimum": 0
+    },
+    "last30dayGmvPerBuyerLte": {
+      "title": "TikTok maximum 30-day GMV/buyer",
+      "type": "number",
+      "description": "TikTok commerce filter. Leave as 0 to omit.",
+      "default": 0,
+      "minimum": 0
+    },
+    "last30dayCommissionRateGte": {
+      "title": "TikTok minimum commission rate (%)",
+      "type": "number",
+      "description": "TikTok commerce filter.",
+      "default": 0,
+      "minimum": 0,
+      "maximum": 100
+    },
+    "last30dayCommissionRateLte": {
+      "title": "TikTok maximum commission rate (%)",
+      "type": "number",
+      "description": "TikTok commerce filter. Leave as 0 to omit.",
+      "default": 0,
+      "minimum": 0,
+      "maximum": 100
     },
     "sortField": {
       "title": "Sort field",
@@ -296,6 +513,12 @@
         "type": "string"
       }
     },
+    "unionUserIds": {
+      "title": "Creator IDs",
+      "type": "string",
+      "description": "Optional comma-separated creator IDs to filter videos.",
+      "editor": "textfield"
+    },
     "videoTitle": {
       "title": "Video title keyword",
       "type": "string",
@@ -308,12 +531,37 @@
       "description": "Minimum video views for video search.",
       "minimum": 0
     },
+    "videoViewsCntLte": {
+      "title": "Maximum video views",
+      "type": "integer",
+      "description": "Maximum video views for video search.",
+      "minimum": 0
+    },
     "videoInteractionRateGte": {
       "title": "Minimum video interaction rate (%)",
       "type": "number",
       "description": "Minimum video interaction rate as 0-100 percentage.",
       "minimum": 0,
       "maximum": 100
+    },
+    "videoInteractionRateLte": {
+      "title": "Maximum video interaction rate (%)",
+      "type": "number",
+      "description": "Maximum video interaction rate as 0-100 percentage.",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "videoPublishDateGte": {
+      "title": "Video publish date from",
+      "type": "string",
+      "description": "YYYY-MM-DD. Defaults to the last 15 days if both dates are omitted.",
+      "editor": "textfield"
+    },
+    "videoPublishDateLte": {
+      "title": "Video publish date to",
+      "type": "string",
+      "description": "YYYY-MM-DD.",
+      "editor": "textfield"
     },
     "username": {
       "title": "Seed username",
@@ -409,6 +657,18 @@
       "description": "Optional HTTPS callback URL for collection tasks.",
       "editor": "textfield"
     },
+    "startTime": {
+      "title": "Collection start time",
+      "type": "integer",
+      "description": "Optional Unix timestamp in seconds. Used by creator/post video collection and keyword collection.",
+      "minimum": 0
+    },
+    "endTime": {
+      "title": "Collection end time",
+      "type": "integer",
+      "description": "Optional Unix timestamp in seconds. Defaults to current time when omitted.",
+      "minimum": 0
+    },
     "waitForCompletion": {
       "title": "Wait for task completion",
       "type": "boolean",
@@ -444,13 +704,15 @@
         "",
         "xlsx",
         "csv",
-        "html"
+        "html",
+        "feishu_doc"
       ],
       "enumTitles": [
         "Do not export",
         "Excel xlsx",
         "CSV",
-        "HTML"
+        "HTML",
+        "Feishu Doc"
       ],
       "default": ""
     },
@@ -472,6 +734,12 @@
       "description": "Optional customer brief for video audit.",
       "editor": "textarea"
     },
+    "campaignId": {
+      "title": "Campaign ID",
+      "type": "string",
+      "description": "Optional campaign identifier.",
+      "editor": "textfield"
+    },
     "auditMode": {
       "title": "Audit mode",
       "type": "string",
@@ -492,6 +760,18 @@
       "type": "boolean",
       "description": "Compare video audit against benchmark library.",
       "default": false
+    },
+    "isBenchmark": {
+      "title": "Use as benchmark",
+      "type": "boolean",
+      "description": "Mark this audit as a benchmark sample.",
+      "default": false
+    },
+    "ossUrlOverride": {
+      "title": "OSS URL override",
+      "type": "string",
+      "description": "Legacy override URL. Prefer Uploaded OSS key for new flows.",
+      "editor": "textfield"
     },
     "fileUrl": {
       "title": "File URL",
@@ -566,6 +846,60 @@
         "Outlook"
       ],
       "default": "ses"
+    },
+    "templateId": {
+      "title": "Template ID",
+      "type": "integer",
+      "description": "Optional template ID for metrics/filtering.",
+      "minimum": 1
+    },
+    "sendMode": {
+      "title": "Send mode",
+      "type": "string",
+      "description": "Immediate send or smart scheduling.",
+      "editor": "select",
+      "enum": [
+        "immediate",
+        "smart"
+      ],
+      "enumTitles": [
+        "Immediate",
+        "Smart"
+      ],
+      "default": "immediate"
+    },
+    "forceNew": {
+      "title": "Force new conversation",
+      "type": "boolean",
+      "description": "Start a new conversation instead of reusing an existing one.",
+      "default": false
+    },
+    "attachmentIds": {
+      "title": "Attachment IDs",
+      "type": "array",
+      "description": "Attachment IDs returned by upload.",
+      "editor": "stringList",
+      "items": {
+        "type": "string"
+      }
+    },
+    "deliveryType": {
+      "title": "Delivery type",
+      "type": "string",
+      "description": "Delivery type for file download URL lookup.",
+      "editor": "textfield"
+    },
+    "deliveryParams": {
+      "title": "Delivery params",
+      "type": "object",
+      "description": "Strategy-specific delivery params.",
+      "editor": "json"
+    },
+    "challenge": {
+      "title": "Webhook challenge",
+      "type": "string",
+      "description": "Optional challenge string returned by webhook verification.",
+      "editor": "textfield"
     },
     "maxRetries": {
       "title": "Max retries",

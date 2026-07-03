@@ -53,6 +53,12 @@
       "description": "Optional brand/customer brief.",
       "editor": "textarea"
     },
+    "campaignId": {
+      "title": "Campaign ID",
+      "type": "string",
+      "description": "Optional campaign identifier.",
+      "editor": "textfield"
+    },
     "auditMode": {
       "title": "Audit mode",
       "type": "string",
@@ -68,11 +74,23 @@
       ],
       "default": "high"
     },
+    "isBenchmark": {
+      "title": "Use as benchmark",
+      "type": "boolean",
+      "description": "Mark this audit as a benchmark sample.",
+      "default": false
+    },
     "enableBenchmark": {
       "title": "Enable benchmark comparison",
       "type": "boolean",
       "description": "Compare against benchmark library.",
       "default": false
+    },
+    "ossUrlOverride": {
+      "title": "OSS URL override",
+      "type": "string",
+      "description": "Legacy override URL. Prefer Uploaded OSS key for new flows.",
+      "editor": "textfield"
     },
     "taskId": {
       "title": "Task ID",

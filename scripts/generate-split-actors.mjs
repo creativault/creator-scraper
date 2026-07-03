@@ -3,6 +3,10 @@ import { join } from 'node:path';
 
 const root = process.cwd();
 const outRoot = join(root, 'dist-actors');
+const sharedRuntimeFiles = [
+    '_industry_mapper.mjs',
+    'influencer_industry_tree.json',
+];
 
 const commonRequiredEnv = [
     'CV_API_KEY=your_creativault_openapi_key',
@@ -92,20 +96,37 @@ const creatorFilters = {
         default: 'S2',
     },
     keyword: { title: 'Keyword', type: 'string', description: 'Creator keyword, topic, niche, or username.', editor: 'textfield' },
-    countryCode: { title: 'Creator country code', type: 'string', description: 'Comma-separated country codes, for example US,CA.', editor: 'textfield', default: 'US' },
-    languageCode: { title: 'Creator language code', type: 'string', description: 'Comma-separated creator content language codes, for example en,es.', editor: 'textfield' },
-    industry: { title: 'Industry or category', type: 'string', description: 'Industry/category filter. Category names or supported IDs can be used.', editor: 'textfield' },
+    countryCode: { title: 'Creator country code', type: 'string', description: 'Comma-separated ISO country codes, for example US,CA. Common country names such as United States/美国 are normalized automatically.', editor: 'textfield', default: 'US' },
+    languageCode: { title: 'Creator language code', type: 'string', description: 'Comma-separated creator content language codes, for example en,es. Common language names such as English/英语 are normalized automatically.', editor: 'textfield' },
+    industry: { title: 'Industry or category', type: 'string', description: 'Industry/category filter. Use supported English category names or IDs. For TikTok, Chinese labels such as 美妆 may not be accepted by the OpenAPI.', editor: 'textfield' },
     followersCntGte: { title: 'Minimum followers', type: 'integer', description: 'Minimum followers/subscribers.', default: 10000, minimum: 0 },
     followersCntLte: { title: 'Maximum followers', type: 'integer', description: 'Maximum followers/subscribers. Leave as 0 to omit.', default: 0, minimum: 0 },
     last10AvgVideoViewsGte: { title: 'Minimum average views', type: 'number', description: 'Minimum average views.', default: 0, minimum: 0 },
     last10AvgVideoViewsLte: { title: 'Maximum average views', type: 'number', description: 'Maximum average views. Leave as 0 to omit.', default: 0, minimum: 0 },
     last10AvgVideoInteractionRateGte: { title: 'Minimum interaction rate (%)', type: 'number', description: '0-100 percentage.', default: 0, minimum: 0, maximum: 100 },
     last10AvgVideoInteractionRateLte: { title: 'Maximum interaction rate (%)', type: 'number', description: '0-100 percentage. Leave as 0 to omit.', default: 0, minimum: 0, maximum: 100 },
+    last10AvgShortVideoViewsGte: { title: 'Minimum short-video average views', type: 'number', description: 'YouTube only. Minimum last-10 short-video average views.', default: 0, minimum: 0 },
+    last10AvgShortVideoViewsLte: { title: 'Maximum short-video average views', type: 'number', description: 'YouTube only. Leave as 0 to omit.', default: 0, minimum: 0 },
+    last10AvgShortVideoInteractionRateGte: { title: 'Minimum short-video interaction rate (%)', type: 'number', description: 'YouTube only. 0-100 percentage.', default: 0, minimum: 0, maximum: 100 },
+    last10AvgShortVideoInteractionRateLte: { title: 'Maximum short-video interaction rate (%)', type: 'number', description: 'YouTube only. Leave as 0 to omit.', default: 0, minimum: 0, maximum: 100 },
+    last10AvgVideoLikesCntGte: { title: 'Minimum average likes', type: 'number', description: 'Twitter/X only. Minimum last-10 average likes.', default: 0, minimum: 0 },
+    last10AvgVideoLikesCntLte: { title: 'Maximum average likes', type: 'number', description: 'Twitter/X only. Leave as 0 to omit.', default: 0, minimum: 0 },
+    lastVideoViewsCntGte: { title: 'Minimum latest video views', type: 'integer', description: 'Twitter/X only. Minimum latest video views.', default: 0, minimum: 0 },
+    lastVideoViewsCntLte: { title: 'Maximum latest video views', type: 'integer', description: 'Twitter/X only. Leave as 0 to omit.', default: 0, minimum: 0 },
+    last10VideoViewsPerSubGte: { title: 'Minimum views/followers (%)', type: 'number', description: 'Twitter/X only. Last-10 average views per follower.', default: 0, minimum: 0, maximum: 100 },
+    last10VideoViewsPerSubLte: { title: 'Maximum views/followers (%)', type: 'number', description: 'Twitter/X only. Leave as 0 to omit.', default: 0, minimum: 0, maximum: 100 },
+    last10MedVideoViewsPerSubGte: { title: 'Minimum median views/followers (%)', type: 'number', description: 'Twitter/X only. Last-10 median views per follower.', default: 0, minimum: 0, maximum: 100 },
+    last10MedVideoViewsPerSubLte: { title: 'Maximum median views/followers (%)', type: 'number', description: 'Twitter/X only. Leave as 0 to omit.', default: 0, minimum: 0, maximum: 100 },
     hasEmail: { title: 'Only creators with email', type: 'boolean', description: 'Return only creators with public email contact when supported.', default: false },
     hasWhatsapp: { title: 'Only creators with WhatsApp', type: 'boolean', description: 'YouTube/Instagram filter.', default: false },
     hasMcn: { title: 'TikTok has MCN', type: 'boolean', description: 'TikTok only.', default: false },
+    hasLine: { title: 'TikTok has LINE', type: 'boolean', description: 'TikTok only.', default: false },
+    hasZalo: { title: 'TikTok has Zalo', type: 'boolean', description: 'TikTok only.', default: false },
     isProductKol: { title: 'Instagram product KOL', type: 'boolean', description: 'Instagram only.', default: false },
     isAiCreator: { title: 'AI creator', type: 'boolean', description: 'YouTube/Instagram filter when supported.', default: false },
+    isBlueVerified: { title: 'Twitter/X blue verified', type: 'boolean', description: 'Twitter/X only.', default: false },
+    isVerified: { title: 'Verification status', type: 'string', description: 'Twitter/X optional verification filter.', editor: 'select', enum: ['', '1', '0'], enumTitles: ['Any', 'Verified', 'Not verified'], default: '' },
+    kolStyle: { title: 'KOL style tags', type: 'string', description: 'Twitter/X only. Comma-separated style tags.', editor: 'textfield' },
     gender: {
         title: 'Creator gender',
         type: 'string',
@@ -115,11 +136,22 @@ const creatorFilters = {
         enumTitles: ['Any', 'Female', 'Male'],
         default: '',
     },
-    audienceCountryCodeList: { title: 'Audience country codes', type: 'string', description: 'Comma-separated. Best used with S3.', editor: 'textfield' },
-    audienceLanguageCodeList: { title: 'Audience language codes', type: 'string', description: 'Comma-separated. Best used with S3.', editor: 'textfield' },
+    audienceCountryCodeList: { title: 'Audience country codes', type: 'string', description: 'Comma-separated ISO country codes. Common country names are normalized automatically. Best used with S3.', editor: 'textfield' },
+    audienceLanguageCodeList: { title: 'Audience language codes', type: 'string', description: 'Comma-separated language codes. Common language names are normalized automatically. Best used with S3.', editor: 'textfield' },
+    audienceAgeList: { title: 'Audience age groups', type: 'string', description: 'Comma-separated age group IDs or labels when supported. Best used with S3.', editor: 'textfield' },
     audienceFemaleRateGte: { title: 'Minimum female audience (%)', type: 'number', description: 'Best used with S3.', default: 0, minimum: 0, maximum: 100 },
+    audienceFemaleRateLte: { title: 'Maximum female audience (%)', type: 'number', description: 'Best used with S3. Leave as 0 to omit.', default: 0, minimum: 0, maximum: 100 },
     lastVideoPublishDateGte: { title: 'Last post from', type: 'string', description: 'YYYY-MM-DD.', editor: 'textfield' },
     lastVideoPublishDateLte: { title: 'Last post to', type: 'string', description: 'YYYY-MM-DD.', editor: 'textfield' },
+    productCategoryIdArray: { title: 'TikTok product category IDs', type: 'string', description: 'TikTok only. Comma-separated product category IDs.', editor: 'textfield' },
+    last30dayGmvGte: { title: 'TikTok minimum 30-day GMV', type: 'number', description: 'TikTok commerce filter.', default: 0, minimum: 0 },
+    last30dayGmvLte: { title: 'TikTok maximum 30-day GMV', type: 'number', description: 'TikTok commerce filter. Leave as 0 to omit.', default: 0, minimum: 0 },
+    last30dayGpmGte: { title: 'TikTok minimum 30-day GPM', type: 'number', description: 'TikTok commerce filter.', default: 0, minimum: 0 },
+    last30dayGpmLte: { title: 'TikTok maximum 30-day GPM', type: 'number', description: 'TikTok commerce filter. Leave as 0 to omit.', default: 0, minimum: 0 },
+    last30dayGmvPerBuyerGte: { title: 'TikTok minimum 30-day GMV/buyer', type: 'number', description: 'TikTok commerce filter.', default: 0, minimum: 0 },
+    last30dayGmvPerBuyerLte: { title: 'TikTok maximum 30-day GMV/buyer', type: 'number', description: 'TikTok commerce filter. Leave as 0 to omit.', default: 0, minimum: 0 },
+    last30dayCommissionRateGte: { title: 'TikTok minimum commission rate (%)', type: 'number', description: 'TikTok commerce filter.', default: 0, minimum: 0, maximum: 100 },
+    last30dayCommissionRateLte: { title: 'TikTok maximum commission rate (%)', type: 'number', description: 'TikTok commerce filter. Leave as 0 to omit.', default: 0, minimum: 0, maximum: 100 },
     sortField: { title: 'Sort field', type: 'string', description: 'Optional. Leave empty to use a platform-safe default.', editor: 'textfield' },
     sortOrder: {
         title: 'Sort order',
@@ -138,6 +170,7 @@ const actors = [
         name: 'creativault-creator-search',
         title: 'Influencer Scraper',
         defaultOperation: 'creatorSearch',
+        needsIndustryMapper: true,
         description: 'Search TikTok, Instagram, YouTube, and Twitter/X creators with follower, country, engagement, email, industry, and audience filters.',
         pricing: 'S1 $1.20/1k creators, S2 $4/1k creators, S3 $8/1k creators.',
         properties: {
@@ -154,6 +187,7 @@ const actors = [
         name: 'creativault-lookalike-finder',
         title: 'Lookalike Influencer Finder',
         defaultOperation: 'lookalike',
+        needsIndustryMapper: true,
         description: 'Find similar creators from a seed username or profile URL across TikTok, Instagram, and YouTube.',
         pricing: '$6.00 / 1,000 similar creators.',
         properties: {
@@ -161,13 +195,14 @@ const actors = [
             username: { title: 'Seed username', type: 'string', description: 'Seed creator username when no profile URL is provided.', editor: 'textfield' },
             platform: { ...commonProps.platform, enum: ['', 'tiktok', 'youtube', 'instagram'], enumTitles: ['Auto / not set', 'TikTok', 'YouTube', 'Instagram'], default: '' },
             targetPlatform: { title: 'Target platform', type: 'string', description: 'Target platform for lookalike results.', editor: 'select', enum: ['', 'tiktok', 'youtube', 'instagram'], enumTitles: ['Same as seed', 'TikTok', 'YouTube', 'Instagram'], default: '' },
-            countryCode: { title: 'Target country code', type: 'string', description: 'Optional target region/country code.', editor: 'textfield' },
-            languageCode: { title: 'Target language code', type: 'string', description: 'Optional target language code.', editor: 'textfield' },
+            countryCode: { title: 'Target country code', type: 'string', description: 'Optional target ISO country code. Common country names such as United States/美国 are normalized automatically.', editor: 'textfield' },
+            languageCode: { title: 'Target language code', type: 'string', description: 'Optional target language code. Common language names such as English/英语 are normalized automatically.', editor: 'textfield' },
             followersCntGte: creatorFilters.followersCntGte,
             followersCntLte: creatorFilters.followersCntLte,
             last10AvgVideoViewsGte: creatorFilters.last10AvgVideoViewsGte,
             audienceFemaleRateGte: creatorFilters.audienceFemaleRateGte,
             limit: { title: 'Max similar creators', type: 'integer', description: 'Maximum similar creators to return.', default: 20, minimum: 1, maximum: 50 },
+            serviceLevel: creatorFilters.serviceLevel,
             lang: commonProps.lang,
             maxRetries: commonProps.maxRetries,
         },
@@ -181,6 +216,7 @@ const actors = [
         pricing: '$1.50 / 1,000 videos.',
         properties: {
             platform: { ...commonProps.platform, enum: ['', 'tiktok', 'youtube', 'instagram'], enumTitles: ['All supported', 'TikTok', 'YouTube', 'Instagram'], default: '' },
+            unionUserIds: { title: 'Creator IDs', type: 'string', description: 'Optional comma-separated creator IDs to filter videos.', editor: 'textfield' },
             hashtag: { title: 'Hashtags', type: 'array', description: 'Video hashtags, max 3.', editor: 'stringList', items: { type: 'string' } },
             videoTitle: { title: 'Video title keyword', type: 'string', description: 'Video title keyword.', editor: 'textfield' },
             videoViewsCntGte: { title: 'Minimum video views', type: 'integer', description: 'Minimum video views.', minimum: 0 },
@@ -211,11 +247,13 @@ const actors = [
             taskName: { title: 'Task name', type: 'string', description: 'Optional collection task name.', editor: 'textfield' },
             taskId: commonProps.taskId,
             webhookUrl: { title: 'Webhook URL', type: 'string', description: 'Optional HTTPS callback URL for collection completion.', editor: 'textfield' },
+            startTime: { title: 'Collection start time', type: 'integer', description: 'Optional Unix timestamp in seconds. Used by creator/post video collection and keyword collection.', minimum: 0 },
+            endTime: { title: 'Collection end time', type: 'integer', description: 'Optional Unix timestamp in seconds. Defaults to current time when omitted.', minimum: 0 },
             waitForCompletion: commonProps.waitForCompletion,
             pollIntervalSeconds: commonProps.pollIntervalSeconds,
             maxPollAttempts: commonProps.maxPollAttempts,
             fetchData: { title: 'Fetch completed collection data', type: 'boolean', description: 'Charged per returned record.', default: false },
-            exportFormat: { title: 'Export format', type: 'string', description: 'Charged per successful export.', editor: 'select', enum: ['', 'xlsx', 'csv', 'html'], enumTitles: ['Do not export', 'Excel xlsx', 'CSV', 'HTML'], default: '' },
+            exportFormat: { title: 'Export format', type: 'string', description: 'Charged per successful export. feishu_doc is accepted by schema but may be disabled server-side.', editor: 'select', enum: ['', 'xlsx', 'csv', 'html', 'feishu_doc'], enumTitles: ['Do not export', 'Excel xlsx', 'CSV', 'HTML', 'Feishu Doc'], default: '' },
             maxResults: commonProps.maxResults,
             size: commonProps.size,
             maxRetries: commonProps.maxRetries,
@@ -236,8 +274,11 @@ const actors = [
             filename: { title: 'Upload filename', type: 'string', description: 'Optional filename override.', editor: 'textfield' },
             uploadedOssKey: { title: 'Uploaded OSS key', type: 'string', description: 'OSS key returned by media upload.', editor: 'textfield' },
             brief: { title: 'Audit brief', type: 'string', description: 'Optional brand/customer brief.', editor: 'textarea' },
+            campaignId: { title: 'Campaign ID', type: 'string', description: 'Optional campaign identifier.', editor: 'textfield' },
             auditMode: { title: 'Audit mode', type: 'string', description: 'Audit depth.', editor: 'select', enum: ['high', 'low'], enumTitles: ['High', 'Low'], default: 'high' },
+            isBenchmark: { title: 'Use as benchmark', type: 'boolean', description: 'Mark this audit as a benchmark sample.', default: false },
             enableBenchmark: { title: 'Enable benchmark comparison', type: 'boolean', description: 'Compare against benchmark library.', default: false },
+            ossUrlOverride: { title: 'OSS URL override', type: 'string', description: 'Legacy override URL. Prefer Uploaded OSS key for new flows.', editor: 'textfield' },
             taskId: commonProps.taskId,
             waitForCompletion: { ...commonProps.waitForCompletion, default: true },
             pollIntervalSeconds: { ...commonProps.pollIntervalSeconds, default: 10 },
@@ -264,6 +305,10 @@ const actors = [
             bodyText: { title: 'Email text body', type: 'string', description: 'Plain-text outreach body.', editor: 'textarea' },
             bodyHtml: { title: 'Email HTML body', type: 'string', description: 'HTML outreach body.', editor: 'textarea' },
             channel: { title: 'Email channel', type: 'string', description: 'Outreach channel.', editor: 'select', enum: ['ses', 'gmail', 'outlook'], enumTitles: ['SES', 'Gmail', 'Outlook'], default: 'ses' },
+            templateId: { title: 'Template ID', type: 'integer', description: 'Optional template ID for metrics/filtering.', minimum: 1 },
+            sendMode: { title: 'Send mode', type: 'string', description: 'Immediate send or smart scheduling.', editor: 'select', enum: ['immediate', 'smart'], enumTitles: ['Immediate', 'Smart'], default: 'immediate' },
+            forceNew: { title: 'Force new conversation', type: 'boolean', description: 'Start a new conversation instead of reusing an existing one.', default: false },
+            attachmentIds: { title: 'Attachment IDs', type: 'array', description: 'Attachment IDs returned by upload.', editor: 'stringList', items: { type: 'string' } },
             taskId: commonProps.taskId,
             email: { title: 'Contact email', type: 'string', description: 'Email for contact history lookup.', editor: 'textfield' },
             fileUrl: { title: 'Attachment file URL', type: 'string', description: 'Public file URL for attachment upload.', editor: 'textfield' },
@@ -295,6 +340,7 @@ const actors = [
         name: 'creativault-openapi-suite-internal',
         title: 'OpenAPI Suite Internal',
         defaultOperation: 'creatorSearch',
+        needsIndustryMapper: true,
         description: 'Internal all-in-one actor covering every CreatiVault OpenAPI operation, including debug/raw operations when enabled by environment variables.',
         pricing: 'Internal suite. Use public single-purpose actors for Store listings.',
         includeSuiteSchema: true,
@@ -416,10 +462,24 @@ function readText(path) {
 }
 
 function writeJson(path, value) {
-    writeFileSync(path, `${JSON.stringify(value, null, 2)}\n`);
+    writeTextIfChanged(path, `${JSON.stringify(value, null, 2)}\n`);
 }
 
-rmSync(outRoot, { recursive: true, force: true });
+function writeTextIfChanged(path, value) {
+    const text = String(value);
+    if (existsSync(path) && readText(path) === text) return;
+    writeFileSync(path, text);
+}
+
+function copyIfChanged(source, destination) {
+    const sourceContent = readFileSync(source);
+    if (existsSync(destination)) {
+        const destinationContent = readFileSync(destination);
+        if (Buffer.compare(sourceContent, destinationContent) === 0) return;
+    }
+    copyFileSync(source, destination);
+}
+
 mkdirSync(outRoot, { recursive: true });
 
 for (const actor of actors) {
@@ -433,14 +493,24 @@ for (const actor of actors) {
 
     writeJson(join(actorDir, 'INPUT_SCHEMA.json'), schema);
     writeJson(join(actorDir, 'actor.json'), makeActorJson(actor));
-    writeFileSync(join(dir, 'README.md'), makeReadme(actor));
-    writeFileSync(join(dir, 'Dockerfile'), makeDockerfile(actor));
-    copyFileSync(join(root, 'main.js'), join(dir, 'main.js'));
-    copyFileSync(join(root, 'package.json'), join(dir, 'package.json'));
-    copyFileSync(join(root, 'package-lock.json'), join(dir, 'package-lock.json'));
+    writeTextIfChanged(join(dir, 'README.md'), makeReadme(actor));
+    writeTextIfChanged(join(dir, 'Dockerfile'), makeDockerfile(actor));
+    copyIfChanged(join(root, 'main.js'), join(dir, 'main.js'));
+    copyIfChanged(join(root, 'package.json'), join(dir, 'package.json'));
+    copyIfChanged(join(root, 'package-lock.json'), join(dir, 'package-lock.json'));
+    if (actor.needsIndustryMapper) {
+        for (const file of sharedRuntimeFiles) {
+            const source = join(root, file);
+            if (existsSync(source)) copyIfChanged(source, join(dir, file));
+        }
+    } else {
+        for (const file of sharedRuntimeFiles) {
+            rmSync(join(dir, file), { force: true });
+        }
+    }
 }
 
-writeFileSync(join(outRoot, 'README.md'), `# CreatiVault Split Apify Actors
+writeTextIfChanged(join(outRoot, 'README.md'), `# CreatiVault Split Apify Actors
 
 Generated by \`npm run generate:actors\`.
 
