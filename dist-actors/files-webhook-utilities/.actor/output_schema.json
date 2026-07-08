@@ -1,0 +1,14 @@
+{
+  "actorOutputSchemaVersion": 1,
+  "title": "File & Webhook Utilities output",
+  "description": "File download URL and webhook verification results stored in the default dataset.",
+  "type": "object",
+  "properties": {
+    "results": {
+      "type": "string",
+      "title": "Utility results",
+      "description": "Utility operation results returned by the Actor.",
+      "template": "{{links.apiDefaultDatasetUrl}}/items"
+    }
+  }
+}

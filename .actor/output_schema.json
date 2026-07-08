@@ -1,0 +1,14 @@
+{
+  "actorOutputSchemaVersion": 1,
+  "title": "CreatiVault OpenAPI output",
+  "description": "CreatiVault OpenAPI operation results stored in the default dataset.",
+  "type": "object",
+  "properties": {
+    "results": {
+      "type": "string",
+      "title": "OpenAPI results",
+      "description": "Records returned by the selected CreatiVault OpenAPI operation.",
+      "template": "{{links.apiDefaultDatasetUrl}}/items"
+    }
+  }
+}

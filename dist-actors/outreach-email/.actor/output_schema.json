@@ -1,0 +1,14 @@
+{
+  "actorOutputSchemaVersion": 1,
+  "title": "Influencer Outreach Email output",
+  "description": "Outreach email tasks, attachment uploads, and query results stored in the default dataset.",
+  "type": "object",
+  "properties": {
+    "results": {
+      "type": "string",
+      "title": "Outreach results",
+      "description": "Outreach task records, accepted email sends, attachment uploads, and related query results.",
+      "template": "{{links.apiDefaultDatasetUrl}}/items"
+    }
+  }
+}

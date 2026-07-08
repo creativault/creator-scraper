@@ -1,0 +1,14 @@
+{
+  "actorOutputSchemaVersion": 1,
+  "title": "Short Video Scraper output",
+  "description": "Short-form video search results stored in the default dataset.",
+  "type": "object",
+  "properties": {
+    "results": {
+      "type": "string",
+      "title": "Video results",
+      "description": "Short-form video records returned by the Actor.",
+      "template": "{{links.apiDefaultDatasetUrl}}/items"
+    }
+  }
+}

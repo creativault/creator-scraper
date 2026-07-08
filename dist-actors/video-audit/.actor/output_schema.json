@@ -1,0 +1,14 @@
+{
+  "actorOutputSchemaVersion": 1,
+  "title": "Video Audit output",
+  "description": "Video audit task records and audit results stored in the default dataset.",
+  "type": "object",
+  "properties": {
+    "results": {
+      "type": "string",
+      "title": "Audit results",
+      "description": "Submitted audit tasks, uploaded media records, task statuses, and audit result records.",
+      "template": "{{links.apiDefaultDatasetUrl}}/items"
+    }
+  }
+}

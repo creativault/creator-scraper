@@ -1,0 +1,14 @@
+{
+  "actorOutputSchemaVersion": 1,
+  "title": "Influencer Scraper output",
+  "description": "Creator search results stored in the default dataset.",
+  "type": "object",
+  "properties": {
+    "results": {
+      "type": "string",
+      "title": "Creator results",
+      "description": "Creator profiles returned by the Actor.",
+      "template": "{{links.apiDefaultDatasetUrl}}/items"
+    }
+  }
+}

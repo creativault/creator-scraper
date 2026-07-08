@@ -381,6 +381,7 @@ function makeActorJson(actor) {
         buildTag: 'latest',
         meta: { templateId: 'starter-javascript' },
         input: './INPUT_SCHEMA.json',
+        output: './output_schema.json',
         storages: {
             dataset: {
                 actorSpecification: 1,
@@ -414,6 +415,80 @@ function makeActorJson(actor) {
                         },
                     },
                 },
+            },
+        },
+    };
+}
+
+function makeOutputSchema(actor) {
+    const outputBySlug = {
+        'creator-search': {
+            title: 'Influencer Scraper output',
+            resultTitle: 'Creator results',
+            description: 'Creator search results stored in the default dataset.',
+            resultDescription: 'Creator profiles returned by the Actor.',
+        },
+        'lookalike-finder': {
+            title: 'Lookalike Influencer Finder output',
+            resultTitle: 'Similar creator results',
+            description: 'Lookalike creator results stored in the default dataset.',
+            resultDescription: 'Similar creators returned by the Actor.',
+        },
+        'video-search': {
+            title: 'Short Video Scraper output',
+            resultTitle: 'Video results',
+            description: 'Short-form video search results stored in the default dataset.',
+            resultDescription: 'Short-form video records returned by the Actor.',
+        },
+        'collection-export': {
+            title: 'Influencer Collection & Export output',
+            resultTitle: 'Collection results',
+            description: 'Collection task records, fetched records, and export metadata stored in the default dataset.',
+            resultDescription: 'Submitted task records, fetched creator records, and export metadata.',
+        },
+        'video-audit': {
+            title: 'Video Audit output',
+            resultTitle: 'Audit results',
+            description: 'Video audit task records and audit results stored in the default dataset.',
+            resultDescription: 'Submitted audit tasks, uploaded media records, task statuses, and audit result records.',
+        },
+        'outreach-email': {
+            title: 'Influencer Outreach Email output',
+            resultTitle: 'Outreach results',
+            description: 'Outreach email tasks, attachment uploads, and query results stored in the default dataset.',
+            resultDescription: 'Outreach task records, accepted email sends, attachment uploads, and related query results.',
+        },
+        'files-webhook-utilities': {
+            title: 'File & Webhook Utilities output',
+            resultTitle: 'Utility results',
+            description: 'File download URL and webhook verification results stored in the default dataset.',
+            resultDescription: 'Utility operation results returned by the Actor.',
+        },
+        'openapi-suite-internal': {
+            title: 'OpenAPI Suite Internal output',
+            resultTitle: 'OpenAPI results',
+            description: 'Internal CreatiVault OpenAPI operation results stored in the default dataset.',
+            resultDescription: 'Records returned by the selected CreatiVault OpenAPI operation.',
+        },
+    };
+    const details = outputBySlug[actor.slug] || {
+        title: `${actor.title} output`,
+        resultTitle: 'Results',
+        description: `${actor.title} results stored in the default dataset.`,
+        resultDescription: 'Records returned by the Actor.',
+    };
+
+    return {
+        actorOutputSchemaVersion: 1,
+        title: details.title,
+        description: details.description,
+        type: 'object',
+        properties: {
+            results: {
+                type: 'string',
+                title: details.resultTitle,
+                description: details.resultDescription,
+                template: '{{links.apiDefaultDatasetUrl}}/items',
             },
         },
     };
@@ -503,6 +578,7 @@ for (const actor of actors) {
 
     writeJson(join(actorDir, 'INPUT_SCHEMA.json'), schema);
     writeJson(join(actorDir, 'actor.json'), makeActorJson(actor));
+    writeJson(join(actorDir, 'output_schema.json'), makeOutputSchema(actor));
     writeTextIfChanged(join(dir, 'README.md'), makeReadme(actor));
     writeTextIfChanged(join(dir, 'Dockerfile'), makeDockerfile(actor));
     copyIfChanged(join(root, 'main.js'), join(dir, 'main.js'));

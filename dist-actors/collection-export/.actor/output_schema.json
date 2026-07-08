@@ -1,0 +1,14 @@
+{
+  "actorOutputSchemaVersion": 1,
+  "title": "Influencer Collection & Export output",
+  "description": "Collection task records, fetched records, and export metadata stored in the default dataset.",
+  "type": "object",
+  "properties": {
+    "results": {
+      "type": "string",
+      "title": "Collection results",
+      "description": "Submitted task records, fetched creator records, and export metadata.",
+      "template": "{{links.apiDefaultDatasetUrl}}/items"
+    }
+  }
+}

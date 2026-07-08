@@ -1,0 +1,14 @@
+{
+  "actorOutputSchemaVersion": 1,
+  "title": "Lookalike Influencer Finder output",
+  "description": "Lookalike creator results stored in the default dataset.",
+  "type": "object",
+  "properties": {
+    "results": {
+      "type": "string",
+      "title": "Similar creator results",
+      "description": "Similar creators returned by the Actor.",
+      "template": "{{links.apiDefaultDatasetUrl}}/items"
+    }
+  }
+}
