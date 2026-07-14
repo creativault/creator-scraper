@@ -4,7 +4,7 @@ Search TikTok, Instagram, YouTube, and Twitter/X creators with follower, country
 
 ## Pricing
 
-S1 $1.20/1k creators, S2 $4/1k creators, S3 $8/1k creators.
+$8.00 / 1,000 creators.
 
 ## Owner configuration
 

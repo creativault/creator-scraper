@@ -164,18 +164,44 @@ const creatorFilters = {
     },
 };
 
+const publicCreatorFilters = {
+    ...creatorFilters,
+    audienceCountryCodeList: {
+        ...creatorFilters.audienceCountryCodeList,
+        description: 'Comma-separated ISO country codes. Common country names are normalized automatically.',
+    },
+    audienceLanguageCodeList: {
+        ...creatorFilters.audienceLanguageCodeList,
+        description: 'Comma-separated language codes. Common language names are normalized automatically.',
+    },
+    audienceAgeList: {
+        ...creatorFilters.audienceAgeList,
+        description: 'Comma-separated age group IDs or labels when supported.',
+    },
+    audienceFemaleRateGte: {
+        ...creatorFilters.audienceFemaleRateGte,
+        description: 'Minimum female audience percentage.',
+    },
+    audienceFemaleRateLte: {
+        ...creatorFilters.audienceFemaleRateLte,
+        description: 'Maximum female audience percentage. Leave as 0 to omit.',
+    },
+};
+delete publicCreatorFilters.serviceLevel;
+
 const actors = [
     {
         slug: 'creator-search',
         name: 'creativault-creator-search',
         title: 'Influencer Scraper',
         defaultOperation: 'creatorSearch',
+        forceCreatorServiceLevel: 'S3',
         needsIndustryMapper: true,
         description: 'Search TikTok, Instagram, YouTube, and Twitter/X creators with follower, country, engagement, email, industry, and audience filters.',
-        pricing: 'S1 $1.20/1k creators, S2 $4/1k creators, S3 $8/1k creators.',
+        pricing: '$8.00 / 1,000 creators.',
         properties: {
             platform: { ...commonProps.platform, enum: ['tiktok', 'youtube', 'instagram', 'twitter'], enumTitles: ['TikTok', 'YouTube', 'Instagram', 'Twitter/X'] },
-            ...creatorFilters,
+            ...publicCreatorFilters,
             maxResults: commonProps.maxResults,
             size: commonProps.size,
             lang: commonProps.lang,
@@ -529,8 +555,12 @@ ${actor.operationEnum ? `Available operations: ${actor.operationEnum.map((x) => 
 
 function makeDockerfile(actor) {
     const mapperCopyLine = 'COPY --chown=myuser _industry_mapper.mjs influencer_industry_tree.json ./';
+    const envLines = [`ENV CV_ACTOR_OPERATION=${actor.defaultOperation}`];
+    if (actor.forceCreatorServiceLevel) {
+        envLines.push(`ENV CV_FORCE_CREATOR_SERVICE_LEVEL=${actor.forceCreatorServiceLevel}`);
+    }
     let base = String(readText(join(root, 'Dockerfile')))
-        .replace('FROM apify/actor-node:20', `FROM apify/actor-node:20\nENV CV_ACTOR_OPERATION=${actor.defaultOperation}`)
+        .replace('FROM apify/actor-node:20', `FROM apify/actor-node:20\n${envLines.join('\n')}`)
         .replace(new RegExp(`\\n${escapeRegExp(mapperCopyLine)}`), '');
     if (actor.needsIndustryMapper) {
         base = base.replace('COPY --chown=myuser main.js ./', `COPY --chown=myuser main.js ./\n${mapperCopyLine}`);

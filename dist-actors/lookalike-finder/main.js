@@ -887,12 +887,13 @@ async function parseOpenApiResponse(response) {
 }
 
 async function buildCreatorSearchBody(input, platform, size) {
+    const forcedServiceLevel = normalizeCreatorServiceLevel(process.env.CV_FORCE_CREATOR_SERVICE_LEVEL);
     const common = {
         page: input.page || 1,
         size,
         sort_field: clean(input.sortField),
         sort_order: input.sortOrder || 'desc',
-        service_level: input.serviceLevel || 'S2',
+        service_level: forcedServiceLevel || normalizeCreatorServiceLevel(input.serviceLevel) || 'S2',
         lang: input.lang || 'en',
         keyword: clean(input.keyword),
         country_code: normalizeCountryCodes(input.countryCode),
@@ -993,7 +994,9 @@ async function buildCreatorSearchBody(input, platform, size) {
         });
     }
 
-    return buildBody(input, { ...common, ...platformFields });
+    const body = buildBody(input, { ...common, ...platformFields });
+    if (forcedServiceLevel) body.service_level = forcedServiceLevel;
+    return body;
 }
 
 function buildBody(input, defaults = {}) {
@@ -1137,6 +1140,11 @@ function creatorChargeEvent(serviceLevel) {
     if (level === 'S1') return CHARGE_EVENTS.creatorResultS1;
     if (level === 'S3') return CHARGE_EVENTS.creatorResultS3;
     return CHARGE_EVENTS.creatorResultS2;
+}
+
+function normalizeCreatorServiceLevel(value) {
+    const level = clean(value)?.toUpperCase();
+    return ['S1', 'S2', 'S3'].includes(level) ? level : undefined;
 }
 
 function normalizeOperation(operation) {

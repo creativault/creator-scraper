@@ -2,6 +2,7 @@
 # Node.js 20 includes native fetch/FormData/Blob for OpenAPI and upload calls.
 FROM apify/actor-node:20
 ENV CV_ACTOR_OPERATION=creatorSearch
+ENV CV_FORCE_CREATOR_SERVICE_LEVEL=S3
 
 # Install runtime dependencies. package*.json keeps this layer cache-friendly.
 COPY --chown=myuser package*.json ./

@@ -1,6 +1,6 @@
 {
   "title": "Influencer Scraper",
-  "description": "Search TikTok, Instagram, YouTube, and Twitter/X creators with follower, country, engagement, email, industry, and audience filters. Pricing: S1 $1.20/1k creators, S2 $4/1k creators, S3 $8/1k creators.",
+  "description": "Search TikTok, Instagram, YouTube, and Twitter/X creators with follower, country, engagement, email, industry, and audience filters. Pricing: $8.00 / 1,000 creators.",
   "type": "object",
   "schemaVersion": 1,
   "properties": {
@@ -22,23 +22,6 @@
         "Twitter/X"
       ],
       "default": "tiktok"
-    },
-    "serviceLevel": {
-      "title": "Creator data depth",
-      "type": "string",
-      "description": "S1 basic profile, S2 enriched profile/contact data, S3 deep audience profile.",
-      "editor": "select",
-      "enum": [
-        "S1",
-        "S2",
-        "S3"
-      ],
-      "enumTitles": [
-        "S1 basic - $1.20/1k creators",
-        "S2 enriched - $4/1k creators",
-        "S3 audience profile - $8/1k creators"
-      ],
-      "default": "S2"
     },
     "keyword": {
       "title": "Keyword",
@@ -290,25 +273,25 @@
     "audienceCountryCodeList": {
       "title": "Audience country codes",
       "type": "string",
-      "description": "Comma-separated ISO country codes. Common country names are normalized automatically. Best used with S3.",
+      "description": "Comma-separated ISO country codes. Common country names are normalized automatically.",
       "editor": "textfield"
     },
     "audienceLanguageCodeList": {
       "title": "Audience language codes",
       "type": "string",
-      "description": "Comma-separated language codes. Common language names are normalized automatically. Best used with S3.",
+      "description": "Comma-separated language codes. Common language names are normalized automatically.",
       "editor": "textfield"
     },
     "audienceAgeList": {
       "title": "Audience age groups",
       "type": "string",
-      "description": "Comma-separated age group IDs or labels when supported. Best used with S3.",
+      "description": "Comma-separated age group IDs or labels when supported.",
       "editor": "textfield"
     },
     "audienceFemaleRateGte": {
       "title": "Minimum female audience (%)",
       "type": "number",
-      "description": "Best used with S3.",
+      "description": "Minimum female audience percentage.",
       "default": 0,
       "minimum": 0,
       "maximum": 100
@@ -316,7 +299,7 @@
     "audienceFemaleRateLte": {
       "title": "Maximum female audience (%)",
       "type": "number",
-      "description": "Best used with S3. Leave as 0 to omit.",
+      "description": "Maximum female audience percentage. Leave as 0 to omit.",
       "default": 0,
       "minimum": 0,
       "maximum": 100
