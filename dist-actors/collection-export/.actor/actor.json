@@ -2,7 +2,7 @@
   "actorSpecification": 1,
   "name": "creativault-collection-export",
   "title": "Influencer Collection & Export",
-  "description": "Submit creator collection jobs by profile links, usernames, keywords, creator videos, or post videos, then fetch data or export xlsx/csv/html files.",
+  "description": "Submit batch influencer collection jobs, then check status, fetch records, or export the completed task to xlsx/csv/html.",
   "version": "1.0",
   "buildTag": "latest",
   "meta": {

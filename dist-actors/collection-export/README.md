@@ -1,6 +1,6 @@
 # Influencer Collection & Export
 
-Submit creator collection jobs by profile links, usernames, keywords, creator videos, or post videos, then fetch data or export xlsx/csv/html files.
+Submit batch influencer collection jobs, then check status, fetch records, or export the completed task to xlsx/csv/html.
 
 ## Pricing
 
@@ -23,6 +23,26 @@ CV_API_BASE_URL=your_creativault_openapi_base_url
 Default operation: `collectionSubmit`
 
 Available operations: `collectionSubmit`, `keywordCollectionSubmit`, `collectionStatus`, `collectionData`, `collectionExport`.
+
+## How to use
+
+1. Start a new collection task from profile URLs, usernames, creator profile URLs, post/video URLs, or keywords.
+2. Copy the returned `task_id` from the run output.
+3. Use the same `task_id` to check status, fetch records, or export a completed task.
+4. To run everything in one run, enable `Wait for task completion`, then choose whether to fetch records or export a file after completion.
+
+Task type guide:
+
+| Input type | Choose this task type | What it returns |
+|---|---|---|
+| Creator profile URLs | `LINK_BATCH` | Creator profile records |
+| Creator usernames | `FILE_UPLOAD` | Creator profile records |
+| Creator profile URLs | `CREATOR_VIDEO` | Videos from those creators |
+| Post/video URLs | `POST_VIDEO` | Records for those videos |
+| Keywords or hashtags | `keywordCollectionSubmit` operation | Matching creator collection task |
+
+Twitter/X supports only profile URLs and usernames.
+
 
 ## Notes
 

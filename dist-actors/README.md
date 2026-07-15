@@ -7,7 +7,7 @@ Each subdirectory is a self-contained Apify Actor that can be published separate
 - [Influencer Scraper](./creator-search) - Search TikTok, Instagram, YouTube, and Twitter/X creators with follower, country, engagement, email, industry, and audience filters.
 - [Lookalike Influencer Finder](./lookalike-finder) - Find similar creators from a seed username or profile URL across TikTok, Instagram, and YouTube.
 - [Short Video Scraper](./video-search) - Search short-form videos across TikTok, Instagram, and YouTube by hashtag, title, views, interaction rate, and publish date.
-- [Influencer Collection & Export](./collection-export) - Submit creator collection jobs by profile links, usernames, keywords, creator videos, or post videos, then fetch data or export xlsx/csv/html files.
+- [Influencer Collection & Export](./collection-export) - Submit batch influencer collection jobs, then check status, fetch records, or export the completed task to xlsx/csv/html.
 - [Video Audit](./video-audit) - Submit TikTok, Instagram Reels, or YouTube Shorts for hook, script, storyboard, benchmark, and viral-factor analysis.
 - [Influencer Outreach Email](./outreach-email) - Send creator outreach emails, check task status, inspect contact history, todo follow-ups, metrics, config, and upload attachments.
 - [File & Webhook Utilities](./files-webhook-utilities) - Utility actor for file delivery URL lookup and webhook connectivity verification.

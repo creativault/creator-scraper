@@ -261,28 +261,87 @@ const actors = [
         name: 'creativault-collection-export',
         title: 'Influencer Collection & Export',
         defaultOperation: 'collectionSubmit',
-        description: 'Submit creator collection jobs by profile links, usernames, keywords, creator videos, or post videos, then fetch data or export xlsx/csv/html files.',
+        description: 'Submit batch influencer collection jobs, then check status, fetch records, or export the completed task to xlsx/csv/html.',
         pricing: '$0.05/task, $0.03/export, $2/1k fetched records.',
         operationEnum: ['collectionSubmit', 'keywordCollectionSubmit', 'collectionStatus', 'collectionData', 'collectionExport'],
-        operationTitles: ['Submit link/username/video collection - $0.05/task', 'Submit keyword collection - $0.05/task', 'Check task status - free', 'Fetch task data - $2/1k records', 'Export task data - $0.03/export'],
+        operationTitles: ['Start a collection from URLs/usernames/videos - $0.05/task', 'Start a keyword collection - $0.05/task', 'Check an existing task status - free', 'Fetch records from an existing task - $2/1k records', 'Export an existing task - $0.03/export'],
         properties: {
-            platform: commonProps.platform,
-            taskType: { title: 'Collection task type', type: 'string', description: 'Twitter/X supports only profile links and usernames.', editor: 'select', enum: ['LINK_BATCH', 'FILE_UPLOAD', 'CREATOR_VIDEO', 'POST_VIDEO'], enumTitles: ['Profile links', 'Usernames', 'Creator videos', 'Post videos'], default: 'LINK_BATCH' },
-            values: { title: 'Collection values', type: 'array', description: 'Profile links, usernames, creator profile URLs, or post URLs.', editor: 'stringList', items: { type: 'string' } },
-            keywords: { title: 'Keyword collection terms', type: 'array', description: 'Keyword collection terms, max 10.', editor: 'stringList', items: { type: 'string' } },
-            taskName: { title: 'Task name', type: 'string', description: 'Optional collection task name.', editor: 'textfield' },
-            taskId: commonProps.taskId,
-            webhookUrl: { title: 'Webhook URL', type: 'string', description: 'Optional HTTPS callback URL for collection completion.', editor: 'textfield' },
-            startTime: { title: 'Collection start time', type: 'integer', description: 'Optional Unix timestamp in seconds. Used by creator/post video collection and keyword collection.', minimum: 0 },
-            endTime: { title: 'Collection end time', type: 'integer', description: 'Optional Unix timestamp in seconds. Defaults to current time when omitted.', minimum: 0 },
-            waitForCompletion: commonProps.waitForCompletion,
+            platform: {
+                ...commonProps.platform,
+                title: 'Platform for new collection tasks',
+                description: 'Platform used when starting a new collection task. Twitter/X supports only profile URLs and usernames.',
+                sectionCaption: 'Start a new collection task',
+                sectionDescription: 'Use these fields when you choose one of the two start options above. Starting a task returns a task ID that you can later use for status, fetch, or export.',
+            },
+            taskType: {
+                title: 'What will you provide?',
+                type: 'string',
+                description: 'Choose what the Values list contains. Twitter/X supports only profile URLs and usernames, not video collection.',
+                editor: 'select',
+                enum: ['LINK_BATCH', 'FILE_UPLOAD', 'CREATOR_VIDEO', 'POST_VIDEO'],
+                enumTitles: ['Creator profile URLs -> collect creator profiles', 'Creator usernames -> collect creator profiles', 'Creator profile URLs -> collect videos from those creators', 'Post/video URLs -> collect those videos'],
+                default: 'LINK_BATCH',
+            },
+            values: {
+                title: 'Values for URL/username/video collection',
+                type: 'array',
+                description: 'Used by URL/username/video collection. Add profile URLs for profile collection, usernames for username collection, profile URLs for creator-video collection, or post/video URLs for post-video collection.',
+                editor: 'stringList',
+                items: { type: 'string' },
+            },
+            keywords: {
+                title: 'Keywords for keyword collection',
+                type: 'array',
+                description: 'Used only by keyword collection. Add up to 10 keywords or hashtags to discover and collect matching creators.',
+                editor: 'stringList',
+                items: { type: 'string' },
+            },
+            taskName: { title: 'New task name', type: 'string', description: 'Optional name shown in collection task records.', editor: 'textfield' },
+            webhookUrl: { title: 'Completion webhook URL', type: 'string', description: 'Optional HTTPS callback URL called when the collection task completes.', editor: 'textfield' },
+            startTime: { title: 'Video/keyword collection start time', type: 'integer', description: 'Optional Unix timestamp in seconds. Mainly used by creator-video and keyword collection. Leave empty to use the backend default.', minimum: 0 },
+            endTime: { title: 'Video/keyword collection end time', type: 'integer', description: 'Optional Unix timestamp in seconds. Defaults to current time when omitted.', minimum: 0 },
+            waitForCompletion: {
+                ...commonProps.waitForCompletion,
+                sectionCaption: 'Wait after submitting a task',
+                sectionDescription: 'Optional polling after starting a new task. Polling is free, but the run will use Apify compute time while it waits.',
+            },
             pollIntervalSeconds: commonProps.pollIntervalSeconds,
             maxPollAttempts: commonProps.maxPollAttempts,
-            fetchData: { title: 'Fetch completed collection data', type: 'boolean', description: 'Charged per returned record.', default: false },
-            exportFormat: { title: 'Export format', type: 'string', description: 'Charged per successful export. feishu_doc is accepted by schema but may be disabled server-side.', editor: 'select', enum: ['', 'xlsx', 'csv', 'html', 'feishu_doc'], enumTitles: ['Do not export', 'Excel xlsx', 'CSV', 'HTML', 'Feishu Doc'], default: '' },
-            maxResults: commonProps.maxResults,
-            size: commonProps.size,
-            maxRetries: commonProps.maxRetries,
+            taskId: {
+                ...commonProps.taskId,
+                title: 'Existing collection task ID',
+                description: 'Required for checking status, fetching records, or exporting a completed collection task.',
+                sectionCaption: 'Use an existing task',
+                sectionDescription: 'Use these fields after you already have a task ID from a previous collection run.',
+            },
+            fetchData: {
+                title: 'After waiting, also fetch records',
+                type: 'boolean',
+                description: 'Only used when starting a task with Wait for task completion enabled. For the standalone Fetch records operation, records are fetched automatically. Returned records are charged at $2 per 1,000 records.',
+                default: false,
+            },
+            exportFormat: {
+                title: 'Export file format',
+                type: 'string',
+                description: 'Used by Export an existing task. Also used after submitting a task when Wait for task completion is enabled. Leave as Do not export to avoid automatic export after submit. Standalone export defaults to xlsx if omitted.',
+                editor: 'select',
+                enum: ['', 'xlsx', 'csv', 'html', 'feishu_doc'],
+                enumTitles: ['Do not export after submit', 'Excel xlsx', 'CSV', 'HTML', 'Feishu Doc'],
+                default: '',
+            },
+            maxResults: {
+                ...commonProps.maxResults,
+                title: 'Max records to fetch',
+                description: 'Maximum records to fetch and charge for when using Fetch task data.',
+                sectionCaption: 'Fetch/export options',
+                sectionDescription: 'These options apply when fetching records or exporting an existing completed task.',
+            },
+            size: { ...commonProps.size, description: 'Page size for fetching task records.' },
+            maxRetries: {
+                ...commonProps.maxRetries,
+                sectionCaption: 'Run options',
+                sectionDescription: 'Retry settings for temporary API errors.',
+            },
         },
     },
     {
@@ -544,6 +603,26 @@ ${commonRequiredEnv.join('\n')}
 Default operation: \`${actor.defaultOperation}\`
 
 ${actor.operationEnum ? `Available operations: ${actor.operationEnum.map((x) => `\`${x}\``).join(', ')}.` : 'This actor uses a fixed operation selected by its listing.'}
+
+${actor.slug === 'collection-export' ? `## How to use
+
+1. Start a new collection task from profile URLs, usernames, creator profile URLs, post/video URLs, or keywords.
+2. Copy the returned \`task_id\` from the run output.
+3. Use the same \`task_id\` to check status, fetch records, or export a completed task.
+4. To run everything in one run, enable \`Wait for task completion\`, then choose whether to fetch records or export a file after completion.
+
+Task type guide:
+
+| Input type | Choose this task type | What it returns |
+|---|---|---|
+| Creator profile URLs | \`LINK_BATCH\` | Creator profile records |
+| Creator usernames | \`FILE_UPLOAD\` | Creator profile records |
+| Creator profile URLs | \`CREATOR_VIDEO\` | Videos from those creators |
+| Post/video URLs | \`POST_VIDEO\` | Records for those videos |
+| Keywords or hashtags | \`keywordCollectionSubmit\` operation | Matching creator collection task |
+
+Twitter/X supports only profile URLs and usernames.
+` : ''}
 
 ## Notes
 
