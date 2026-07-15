@@ -121,7 +121,7 @@
     "maxRetries": {
       "title": "Max retries",
       "type": "integer",
-      "description": "Retries for temporary rate-limit and server errors.",
+      "description": "Retries for temporary CreatiVault API rate-limit and server errors.",
       "default": 3,
       "minimum": 1,
       "maximum": 10

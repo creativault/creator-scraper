@@ -78,7 +78,7 @@ const commonProps = {
     maxRetries: {
         title: 'Max retries',
         type: 'integer',
-        description: 'Retries for temporary rate-limit and server errors.',
+        description: 'Retries for temporary CreatiVault API rate-limit and server errors.',
         default: 3,
         minimum: 1,
         maximum: 10,
@@ -339,8 +339,8 @@ const actors = [
             size: { ...commonProps.size, description: 'Page size for fetching task records.' },
             maxRetries: {
                 ...commonProps.maxRetries,
-                sectionCaption: 'Run options',
-                sectionDescription: 'Retry settings for temporary API errors.',
+                sectionCaption: 'Retry settings',
+                sectionDescription: 'Controls retries for temporary CreatiVault API errors. This is separate from Apify platform run options such as memory and timeout.',
             },
         },
     },
