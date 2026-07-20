@@ -8,12 +8,6 @@ const sharedRuntimeFiles = [
     'influencer_industry_tree.json',
 ];
 
-const commonRequiredEnv = [
-    'CV_API_KEY=your_creativault_openapi_key',
-    'CV_USER_IDENTITY=apify-store@creativault.ai',
-    'CV_API_BASE_URL=your_creativault_openapi_base_url',
-];
-
 const commonProps = {
     platform: {
         title: 'Platform',
@@ -217,17 +211,17 @@ const actors = [
         description: 'Find similar creators from a seed username or profile URL across TikTok, Instagram, and YouTube.',
         pricing: '$6.00 / 1,000 similar creators.',
         properties: {
-            profileUrl: { title: 'Seed profile URL', type: 'string', description: 'Creator profile URL. If provided, platform and username are resolved automatically.', editor: 'textfield' },
+            profileUrl: { title: 'Seed profile URL', type: 'string', description: 'Creator profile URL. If provided, platform and username are resolved automatically.', editor: 'textfield', default: 'https://www.tiktok.com/@khaby.lame' },
             username: { title: 'Seed username', type: 'string', description: 'Seed creator username when no profile URL is provided.', editor: 'textfield' },
-            platform: { ...commonProps.platform, enum: ['', 'tiktok', 'youtube', 'instagram'], enumTitles: ['Auto / not set', 'TikTok', 'YouTube', 'Instagram'], default: '' },
-            targetPlatform: { title: 'Target platform', type: 'string', description: 'Target platform for lookalike results.', editor: 'select', enum: ['', 'tiktok', 'youtube', 'instagram'], enumTitles: ['Same as seed', 'TikTok', 'YouTube', 'Instagram'], default: '' },
+            platform: { ...commonProps.platform, enum: ['', 'tiktok', 'youtube', 'instagram'], enumTitles: ['Auto / not set', 'TikTok', 'YouTube', 'Instagram'], default: 'tiktok' },
+            targetPlatform: { title: 'Target platform', type: 'string', description: 'Target platform for lookalike results.', editor: 'select', enum: ['', 'tiktok', 'youtube', 'instagram'], enumTitles: ['Same as seed', 'TikTok', 'YouTube', 'Instagram'], default: 'tiktok' },
             countryCode: { title: 'Target country code', type: 'string', description: 'Optional target ISO country code. Common country names such as United States/美国 are normalized automatically.', editor: 'textfield' },
             languageCode: { title: 'Target language code', type: 'string', description: 'Optional target language code. Common language names such as English/英语 are normalized automatically.', editor: 'textfield' },
             followersCntGte: creatorFilters.followersCntGte,
             followersCntLte: creatorFilters.followersCntLte,
             last10AvgVideoViewsGte: creatorFilters.last10AvgVideoViewsGte,
             audienceFemaleRateGte: creatorFilters.audienceFemaleRateGte,
-            limit: { title: 'Max similar creators', type: 'integer', description: 'Maximum similar creators to return.', default: 20, minimum: 1, maximum: 50 },
+            limit: { title: 'Max similar creators', type: 'integer', description: 'Maximum similar creators to return.', default: 10, minimum: 1, maximum: 50 },
             serviceLevel: creatorFilters.serviceLevel,
             lang: commonProps.lang,
             maxRetries: commonProps.maxRetries,
@@ -287,6 +281,8 @@ const actors = [
                 type: 'array',
                 description: 'Used by URL/username/video collection. Add profile URLs for profile collection, usernames for username collection, profile URLs for creator-video collection, or post/video URLs for post-video collection.',
                 editor: 'stringList',
+                default: ['https://www.tiktok.com/@momentosforest'],
+                prefill: ['https://www.tiktok.com/@momentosforest'],
                 items: { type: 'string' },
             },
             keywords: {
@@ -296,7 +292,7 @@ const actors = [
                 editor: 'stringList',
                 items: { type: 'string' },
             },
-            taskName: { title: 'New task name', type: 'string', description: 'Optional name shown in collection task records.', editor: 'textfield' },
+            taskName: { title: 'New task name', type: 'string', description: 'Optional name shown in collection task records.', editor: 'textfield', default: 'Apify sample collection' },
             webhookUrl: { title: 'Completion webhook URL', type: 'string', description: 'Optional HTTPS callback URL called when the collection task completes.', editor: 'textfield' },
             startTime: { title: 'Video/keyword collection start time', type: 'integer', description: 'Optional Unix timestamp in seconds. Mainly used by creator-video and keyword collection. Leave empty to use the backend default.', minimum: 0 },
             endTime: { title: 'Video/keyword collection end time', type: 'integer', description: 'Optional Unix timestamp in seconds. Defaults to current time when omitted.', minimum: 0 },
@@ -588,22 +584,6 @@ ${actor.description}
 
 ${actor.pricing}
 
-## Owner configuration
-
-Configure these as Apify Actor environment variables/secrets:
-
-\`\`\`text
-${commonRequiredEnv.join('\n')}
-\`\`\`
-
-\`CV_API_KEY\` must be secret. \`CV_API_BASE_URL\` is required and should be configured as an environment variable instead of being hard-coded in source files.
-
-## Operation
-
-Default operation: \`${actor.defaultOperation}\`
-
-${actor.operationEnum ? `Available operations: ${actor.operationEnum.map((x) => `\`${x}\``).join(', ')}.` : 'This actor uses a fixed operation selected by its listing.'}
-
 ${actor.slug === 'collection-export' ? `## How to use
 
 1. Start a new collection task from profile URLs, usernames, creator profile URLs, post/video URLs, or keywords.
@@ -627,8 +607,7 @@ Twitter/X supports only profile URLs and usernames.
 ## Notes
 
 - Empty searches and failed requests are not charged.
-- Status polling is free unless a future PPE event is added.
-- This actor uses the shared CreatiVault OpenAPI runner generated from the root project.
+- Status polling is free.
 `;
 }
 

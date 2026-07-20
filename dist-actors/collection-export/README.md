@@ -6,24 +6,6 @@ Submit batch influencer collection jobs, then check status, fetch records, or ex
 
 $0.05/task, $0.03/export, $2/1k fetched records.
 
-## Owner configuration
-
-Configure these as Apify Actor environment variables/secrets:
-
-```text
-CV_API_KEY=your_creativault_openapi_key
-CV_USER_IDENTITY=apify-store@creativault.ai
-CV_API_BASE_URL=your_creativault_openapi_base_url
-```
-
-`CV_API_KEY` must be secret. `CV_API_BASE_URL` is required and should be configured as an environment variable instead of being hard-coded in source files.
-
-## Operation
-
-Default operation: `collectionSubmit`
-
-Available operations: `collectionSubmit`, `keywordCollectionSubmit`, `collectionStatus`, `collectionData`, `collectionExport`.
-
 ## How to use
 
 1. Start a new collection task from profile URLs, usernames, creator profile URLs, post/video URLs, or keywords.
@@ -47,5 +29,4 @@ Twitter/X supports only profile URLs and usernames.
 ## Notes
 
 - Empty searches and failed requests are not charged.
-- Status polling is free unless a future PPE event is added.
-- This actor uses the shared CreatiVault OpenAPI runner generated from the root project.
+- Status polling is free.

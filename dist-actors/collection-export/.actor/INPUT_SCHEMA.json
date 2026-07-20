@@ -72,6 +72,12 @@
       "type": "array",
       "description": "Used by URL/username/video collection. Add profile URLs for profile collection, usernames for username collection, profile URLs for creator-video collection, or post/video URLs for post-video collection.",
       "editor": "stringList",
+      "default": [
+        "https://www.tiktok.com/@momentosforest"
+      ],
+      "prefill": [
+        "https://www.tiktok.com/@momentosforest"
+      ],
       "items": {
         "type": "string"
       }
@@ -89,7 +95,8 @@
       "title": "New task name",
       "type": "string",
       "description": "Optional name shown in collection task records.",
-      "editor": "textfield"
+      "editor": "textfield",
+      "default": "Apify sample collection"
     },
     "webhookUrl": {
       "title": "Completion webhook URL",

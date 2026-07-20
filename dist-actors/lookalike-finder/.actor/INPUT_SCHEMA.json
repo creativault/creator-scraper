@@ -8,7 +8,8 @@
       "title": "Seed profile URL",
       "type": "string",
       "description": "Creator profile URL. If provided, platform and username are resolved automatically.",
-      "editor": "textfield"
+      "editor": "textfield",
+      "default": "https://www.tiktok.com/@khaby.lame"
     },
     "username": {
       "title": "Seed username",
@@ -33,7 +34,7 @@
         "YouTube",
         "Instagram"
       ],
-      "default": ""
+      "default": "tiktok"
     },
     "targetPlatform": {
       "title": "Target platform",
@@ -52,7 +53,7 @@
         "YouTube",
         "Instagram"
       ],
-      "default": ""
+      "default": "tiktok"
     },
     "countryCode": {
       "title": "Target country code",
@@ -99,7 +100,7 @@
       "title": "Max similar creators",
       "type": "integer",
       "description": "Maximum similar creators to return.",
-      "default": 20,
+      "default": 10,
       "minimum": 1,
       "maximum": 50
     },
